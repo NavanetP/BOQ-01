@@ -422,18 +422,8 @@ function BrandBadge({brand}){
   return <span style={{borderRadius:3,padding:"2px 7px",fontSize:9,fontWeight:700,background:BRAND_COLORS[brand]||"#7c3aed",color:"#fff",letterSpacing:0.5,flexShrink:0,whiteSpace:"nowrap"}}>{BRAND_LABELS[brand]||brand.toUpperCase()}</span>;
 }
 
-
-
-
-
-
-
-
-
-function MainApp(){
-
-
-
+export default function App(){
+  
   const [appStep,setAppStep]=useState("segment");
   const [activeTab,setActiveTab]=useState("servers");
   const [segKey,setSegKey]=useState(null);
@@ -1132,49 +1122,6 @@ function AIScreen({onBack,onResult}){
     </div>
   );
 }
-
-
-
-
-export default function App() {
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [password, setPassword] = useState("");
-
-  const checkPassword = () => {
-    if (password === "1234") {
-      setLoggedIn(true);
-    } else {
-      alert("Wrong Password");
-    }
-  };
-
-  if (!loggedIn) {
-    return (
-      <div style={{ fontFamily: "'Outfit',sans-serif", display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "linear-gradient(160deg,#e8f2fb,#f0f7ff)" }}>
-        <div style={{ background: "#fff", borderRadius: 16, padding: "40px 48px", boxShadow: "0 8px 32px #1e40af18", textAlign: "center", minWidth: 320 }}>
-          <div style={{ width: 48, height: 48, background: "linear-gradient(135deg,#1e40af,#06b6d4)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, margin: "0 auto 16px" }}>⚡</div>
-          <h2 style={{ fontWeight: 800, fontSize: 20, color: "#0c1f3d", marginBottom: 6 }}>DC-BOQ Pro</h2>
-          <p style={{ color: "#7aa3c0", fontSize: 12, marginBottom: 24 }}>Enter your password to continue</p>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && checkPassword()}
-            placeholder="Password"
-            style={{ width: "100%", padding: "10px 14px", borderRadius: 7, border: "1.5px solid #bfdbfe", fontSize: 14, fontFamily: "inherit", marginBottom: 12, outline: "none", color: "#1e3a5f" }}
-          />
-          <button onClick={checkPassword} style={{ width: "100%", padding: "11px", borderRadius: 7, border: "none", background: "linear-gradient(135deg,#1e40af,#06b6d4)", color: "#fff", fontWeight: 700, fontSize: 14, fontFamily: "inherit", cursor: "pointer" }}>
-            Login →
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return <MainApp />;
-}
-
-
 
 function AIResultPanel({result,fmt,onRerun}){
   if(!result)return(<div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:320,gap:14,color:"#7aa3c0"}}><div style={{fontSize:40}}>🤖</div><div style={{fontSize:14,fontWeight:500}}>No AI BOQ generated yet.</div><button onClick={onRerun} style={{padding:"9px 22px",borderRadius:7,border:"none",background:"linear-gradient(135deg,#a855f7,#6366f1)",color:"#fff",cursor:"pointer",fontSize:12,fontFamily:"inherit",fontWeight:700}}>Generate AI BOQ →</button></div>);
