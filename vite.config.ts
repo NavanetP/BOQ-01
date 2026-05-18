@@ -6,4 +6,12 @@ export default defineConfig({
   esbuild: {
     logOverride: { "this-is-undefined-in-esm": "silent" },
   },
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:3002",
+        changeOrigin: true,
+      },
+    },
+  },
 });

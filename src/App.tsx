@@ -1,23 +1,10 @@
-import { useState } from "react";
-
-
-
-
-
-
-
-const SEGMENTS = {
-  retail:        { label:"Retail",              icon:"🛒", color:"#f97316", description:"POS, e-commerce, inventory, omnichannel" },
-  education:     { label:"Education",           icon:"🎓", color:"#3b82f6", description:"LMS, virtual labs, research, student portals" },
-  healthcare:    { label:"Healthcare",          icon:"🏥", color:"#10b981", description:"EMR/EHR, PACS imaging, clinical apps, HIPAA" },
-  bfsi:          { label:"BFSI",                icon:"🏦", color:"#6366f1", description:"Core banking, trading, risk analytics, compliance" },
-  transport:     { label:"Transport",           icon:"🚊", color:"#f59e0b", description:"Fleet mgmt, logistics, traffic analytics, IoT" },
-  manufacturing: { label:"Manufacturing",       icon:"🏭", color:"#84cc16", description:"MES, SCADA, ERP/SAP HANA, predictive maintenance" },
-  research:      { label:"Research / HPC",      icon:"🔬", color:"#a855f7", description:"AI/ML training, genomics, CFD simulation" },
-  smb:           { label:"SMB",                 icon:"🏢", color:"#06b6d4", description:"File/print, email, basic virtualization" },
-  gaming:        { label:"Gaming",              icon:"🎮", color:"#ec4899", description:"Game servers, streaming, matchmaking, analytics" },
-  design:        { label:"Design & Architecture",icon:"🎨", color:"#f43f5e", description:"CAD/BIM, rendering, VFX, visualization" },
-};
+import { useState, useEffect } from "react";
+import { Routes, Route, useNavigate, useParams, Navigate, Link } from "react-router-dom";
+import { SEGMENTS } from "./data/segments";
+import { INFRA_CATALOGUE, BRAND_COLORS, BRAND_LABELS, fmt } from "./data/catalogue";
+import HomePage from "./pages/HomePage";
+import ProductPage from "./pages/ProductPage";
+import { downloadBoqPdf, type BoqPdfPayload } from "./utils/boqPdf";
 
 const SEGMENT_RECOMMENDATIONS = {
   retail: {
@@ -284,123 +271,6 @@ const PSU_OPT=[
   {id:"psu-titanium",label:"Redundant Titanium Efficiency",priceAdder:650},
 ];
 
-const INFRA_CATALOGUE = {
-  network:{label:"Network",icon:"🔗",color:"#7c3aed",items:[
-    {id:"net-cisco-c9300",  name:"Cisco Catalyst 9300 (Access)",      brand:"cisco",   spec:"48x1G/10G PoE+, 4x25G uplinks, DNA, L3",           unitPrice:9500},
-    {id:"net-cisco-n9k-tor",name:"Cisco Nexus 9300 (ToR 25G)",         brand:"cisco",   spec:"48x25G SFP28 + 6x100G QSFP28, VXLAN, ACI-ready",   unitPrice:24000},
-    {id:"net-cisco-n9k-spine",name:"Cisco Nexus 9500 (Spine/Core)",    brand:"cisco",   spec:"64x100G or 16x400G QSFP, non-blocking, ACI fabric", unitPrice:85000},
-    {id:"net-cisco-asr1k",  name:"Cisco ASR 1001-X (WAN Router)",      brand:"cisco",   spec:"10G WAN, BGP/OSPF/MPLS/SD-WAN, 20Gbps",            unitPrice:32000},
-    {id:"net-cisco-ftd",    name:"Cisco Firepower 4115 (NGFW)",        brand:"cisco",   spec:"20Gbps FW, 15Gbps IPS, AMP, TLS 1.3 decrypt",      unitPrice:48000},
-    {id:"net-cisco-ftd-smb",name:"Cisco Firepower 1140 (NGFW SMB)",    brand:"cisco",   spec:"2.2Gbps FW, 1Gbps IPS, AMP, branch/small DC",      unitPrice:8500},
-    {id:"net-cisco-aci",    name:"Cisco ACI Licence (APIC Cluster)",   brand:"cisco",   spec:"3-node APIC cluster, SDN policy, multi-tenancy",    unitPrice:42000},
-    {id:"net-jun-ex4300",   name:"Juniper EX4300-48P (Access)",        brand:"juniper", spec:"48x1G PoE+, 4x10G SFP+, Virtual Chassis, L3",      unitPrice:6800},
-    {id:"net-jun-qfx5120",  name:"Juniper QFX5120-48Y (ToR 25G)",      brand:"juniper", spec:"48x25G SFP28 + 8x100G QSFP28, EVPN/VXLAN",         unitPrice:22000},
-    {id:"net-jun-qfx10k",   name:"Juniper QFX10008 (Spine/Core)",      brand:"juniper", spec:"8-slot, 128x100G, 160Tbps, non-blocking spine",      unitPrice:95000},
-    {id:"net-jun-mx204",    name:"Juniper MX204 (Core/WAN Router)",    brand:"juniper", spec:"400G aggregate, BGP/MPLS/SR, 4x100G native",         unitPrice:28000},
-    {id:"net-jun-srx4600",  name:"Juniper SRX4600 (NGFW/IPS)",        brand:"juniper", spec:"100Gbps FW, 40Gbps IPS, AppID, GPRS-GTP",            unitPrice:55000},
-    {id:"net-aruba-6300",   name:"Aruba CX 6300M (Access PoE)",        brand:"aruba",   spec:"48x1G PoE+ + 4x25G, VSX, CX-OS, AI Insights",      unitPrice:7200},
-    {id:"net-aruba-8360",   name:"Aruba CX 8360-48Y6C (25G Agg)",      brand:"aruba",   spec:"48x25G + 6x100G, VSX stacking, EVPN/VXLAN",         unitPrice:28000},
-    {id:"net-aruba-8400",   name:"Aruba CX 8400 (Core/Spine)",         brand:"aruba",   spec:"Modular, up to 32x100G per slot, AI-driven fabric",  unitPrice:68000},
-    {id:"net-aruba-edgecnt",name:"Aruba EdgeConnect SD-WAN",           brand:"aruba",   spec:"Virtual/appliance SD-WAN, SASE-ready, 2Gbps",        unitPrice:12000},
-    {id:"net-forti-fg100f", name:"FortiGate 100F (NGFW Branch/SMB)",   brand:"fortinet",spec:"20Gbps FW, 5Gbps IPS, SD-WAN, ZTNA, FortiOS",       unitPrice:6500},
-    {id:"net-forti-fg1100e",name:"FortiGate 1100E (NGFW DC Mid)",      brand:"fortinet",spec:"74Gbps FW, 23Gbps IPS, SSL-DPI, HA pair ready",      unitPrice:28000},
-    {id:"net-forti-fg4200f",name:"FortiGate 4200F (NGFW DC Large)",    brand:"fortinet",spec:"198Gbps FW, 80Gbps IPS, NP7 ASIC, 100G ports",      unitPrice:82000},
-    {id:"net-forti-fabric", name:"Fortinet Security Fabric Licence",   brand:"fortinet",spec:"FortiAnalyzer + FortiManager + FortiSIEM bundle",     unitPrice:18000},
-    {id:"net-forti-sd-wan", name:"FortiGate SD-WAN (WAN Edge)",        brand:"fortinet",spec:"Integrated SD-WAN, SASE, application steering",      unitPrice:9500},
-    {id:"net-f5-best",      name:"F5 BIG-IP i5800 (ADC/LB)",           brand:"f5",      spec:"40Gbps ADC, SSL offload, iRules, L4-L7, 3yr",       unitPrice:48000},
-    {id:"net-f5-ltm",       name:"F5 BIG-IP LTM (Load Balancer)",      brand:"f5",      spec:"Local Traffic Manager, full-proxy, 20Gbps",          unitPrice:32000},
-    {id:"net-f5-asm",       name:"F5 Advanced WAF (App Firewall)",      brand:"f5",      spec:"Behavioural WAF, API protection, bot defence",       unitPrice:22000},
-    {id:"net-f5-gtm",       name:"F5 BIG-IP DNS (Global LB/GSLB)",     brand:"f5",      spec:"Anycast DNS, GSLB, health-based geo routing",        unitPrice:18000},
-    {id:"net-f5-sslo",      name:"F5 SSL Orchestrator",                 brand:"f5",      spec:"TLS 1.3 inspection, service chaining, 40Gbps",       unitPrice:28000},
-    {id:"net-pa-pa820",     name:"Palo Alto PA-820 (NGFW SMB/Branch)", brand:"paloalto",spec:"1.9Gbps App-ID FW, 800Mbps threat prevention, ZTNA", unitPrice:7800},
-    {id:"net-pa-pa5250",    name:"Palo Alto PA-5250 (NGFW DC)",        brand:"paloalto",spec:"64Gbps FW, 30Gbps threat, WildFire, DNS Security",   unitPrice:68000},
-    {id:"net-pa-panorama",  name:"Palo Alto Panorama (Central Mgmt)",  brand:"paloalto",spec:"Centralised policy, log mgmt, up to 5000 devices",   unitPrice:16000},
-  ]},
-  storage:{label:"Storage",icon:"💾",color:"#059669",items:[
-    {id:"sto-san-af",name:"All-Flash SAN Array",spec:"200TB raw, 4x16Gbps FC, <0.2ms latency",unitPrice:95000},
-    {id:"sto-san-hybrid",name:"Hybrid SAN Array",spec:"400TB raw, SSD+HDD, 4x16Gbps FC",unitPrice:55000},
-    {id:"sto-nas",name:"NAS Appliance",spec:"200TB usable, SMB/NFS/iSCSI, 25G",unitPrice:28000},
-    {id:"sto-obj",name:"Object Storage Node",spec:"500TB raw, S3-compatible, erasure coding",unitPrice:38000},
-    {id:"sto-tape",name:"Tape Library LTO-9",spec:"LTO-9, 18TB/cartridge, 200-slot",unitPrice:42000},
-  ]},
-  backup:{label:"Backup",icon:"🔒",color:"#d97706",items:[
-    {id:"bkp-sw-ent",name:"Backup Software Enterprise",spec:"Veeam/Commvault, unlimited workloads",unitPrice:28000},
-    {id:"bkp-appl",name:"Backup Appliance",spec:"100TB usable, inline dedup/compress",unitPrice:35000},
-    {id:"bkp-cloud-gw",name:"Cloud Backup Gateway",spec:"AWS/Azure/GCP, tiered archival, 10Gbps",unitPrice:12000},
-    {id:"bkp-immutable",name:"Immutable Backup Repository",spec:"200TB, WORM, ransomware-proof",unitPrice:48000},
-  ]},
-  monitoring:{label:"Monitoring",icon:"📊",color:"#e11d48",items:[
-    {id:"mon-sw",name:"Infrastructure Monitoring Suite",spec:"Zabbix/PRTG/Nagios XI Enterprise, unlimited nodes, 3yr",unitPrice:8500},
-    {id:"mon-apm",name:"APM & Log Analytics",spec:"Elastic/Dynatrace/New Relic, 500GB/day ingest, 3yr",unitPrice:22000},
-    {id:"mon-dcim",name:"DCIM Platform",spec:"Nlyte/Sunbird — power, cooling, capacity, asset management",unitPrice:35000},
-    {id:"mon-siem",name:"SIEM Solution",spec:"Splunk/IBM QRadar, 50GB/day ingest, correlation rules, 1yr",unitPrice:45000},
-    {id:"mon-gpu",name:"GPU & HPC Telemetry Suite",spec:"NVIDIA DCGM + Grafana, GPU utilization, thermal, job metrics",unitPrice:12000},
-    {id:"mon-netflow",name:"Network Flow Analyzer",spec:"SolarWinds NTA / ntopng Enterprise, full NetFlow/sFlow, 3yr",unitPrice:9500},
-    {id:"mon-db",name:"Database Performance Monitor",spec:"SolarWinds DPA / SentryOne, multi-DB, query analytics, 3yr",unitPrice:14000},
-    {id:"mon-aio",name:"All-in-One Observability Platform",spec:"Datadog/Dynatrace Full Stack — infra, APM, logs, synthetics",unitPrice:38000},
-  ]},
-  database:{label:"Database",icon:"🗄️",color:"#0ea5e9",items:[
-    {id:"db-orcl",name:"Oracle DB Enterprise",spec:"Per-processor, unlimited users",unitPrice:47500},
-    {id:"db-mssql",name:"MS SQL Server Enterprise",spec:"2-core pack, SA 3yr",unitPrice:14800},
-    {id:"db-pg-sub",name:"PostgreSQL Enterprise Sub",spec:"EDB/Percona, 24x7, 1yr",unitPrice:6500},
-    {id:"db-mysql-ent",name:"MySQL Enterprise",spec:"Unlimited cluster, HA, 3yr",unitPrice:8200},
-    {id:"db-nosql",name:"NoSQL Cluster (MongoDB)",spec:"Ops Manager, Enterprise 1yr",unitPrice:18000},
-  ]},
-  vmware:{label:"Hypervisor / Virtualisation",icon:"⚙️",color:"#8b5cf6",items:[
-    {id:"vm-vsphere",name:"VMware vSphere Enterprise Plus",spec:"Per-CPU, 3yr SnS, DRS/HA/FT",unitPrice:5200},
-    {id:"vm-vcenter",name:"VMware vCenter Server Standard",spec:"Unlimited hosts, 3yr SnS, lifecycle mgmt",unitPrice:6800},
-    {id:"vm-vsan",name:"VMware vSAN Enterprise",spec:"Per-CPU, all-flash, stretched cluster, dedup",unitPrice:4800},
-    {id:"vm-nsx",name:"VMware NSX-T Enterprise+",spec:"Per-CPU, micro-segmentation, L4-7 FW, IDS",unitPrice:7500},
-    {id:"vm-horizon",name:"VMware Horizon Enterprise",spec:"Per-CCU, VDI+RDSH, instant clone, 3yr SnS",unitPrice:280},
-    {id:"vm-vrops",name:"VMware vRealize Operations",spec:"Per-OSI, AI-driven ops, capacity planning, 3yr",unitPrice:180},
-    {id:"hv-hyperv",name:"Microsoft Hyper-V (Windows Server)",spec:"Included with Win Server DC, SCVMM optional",unitPrice:0},
-    {id:"hv-scvmm",name:"Microsoft SCVMM 2022",spec:"System Center VMM, fabric mgmt, per-OSE",unitPrice:3800},
-    {id:"hv-azstack",name:"Microsoft Azure Stack HCI",spec:"Per-node/yr, hyper-converged, Azure Arc integrated",unitPrice:12000},
-    {id:"hv-ocp",name:"Red Hat OpenShift Platform Plus",spec:"Per-core, Kubernetes+VMs, 3yr subs, 24x7",unitPrice:9600},
-    {id:"hv-oshift-virt",name:"OpenShift Virtualization",spec:"KubeVirt-based VM mgmt on OpenShift, per-core",unitPrice:2800},
-    {id:"hv-ocp-storage",name:"Red Hat OpenShift Data Foundation",spec:"Ceph-based, S3/block/file, per-node, 3yr",unitPrice:7500},
-    {id:"hv-oracle-vm",name:"Oracle VM Server",spec:"Per-socket, Oracle Linux KVM, zero-cost base",unitPrice:0},
-    {id:"hv-oracle-olvm",name:"Oracle Linux Virtualization Manager",spec:"oVirt-based, per-node, Oracle support 3yr",unitPrice:3200},
-    {id:"hv-oracle-oci-hci",name:"Oracle Private Cloud Appliance",spec:"Full rack HCI, OCI-compatible, 3yr support",unitPrice:185000},
-    {id:"hv-nutanix-aos",name:"Nutanix AOS Ultimate",spec:"Per-node/yr, HCI, AHV hypervisor included",unitPrice:18000},
-    {id:"hv-nutanix-prism",name:"Nutanix Prism Pro",spec:"Per-node/yr, AI-ops, capacity planning, analytics",unitPrice:4500},
-    {id:"hv-nutanix-nc2",name:"Nutanix NC2 (Cloud Bursting)",spec:"Per-node/hr, burst to AWS/Azure, unified mgmt",unitPrice:6000},
-    {id:"hv-nutanix-files",name:"Nutanix Files + Objects",spec:"Per-node/yr, SMB/NFS/S3, data services",unitPrice:3800},
-    {id:"hv-hpe-morpheus",name:"HPE Morpheus (Multi-cloud Mgmt)",spec:"Per-socket/yr, VMware/HyperV/KVM/cloud unified",unitPrice:5500},
-    {id:"hv-hpe-simplivity",name:"HPE SimpliVity HCI",spec:"Per-node, OmniStack, built-in backup/WAN opt",unitPrice:28000},
-    {id:"hv-hpe-synergy-cm",name:"HPE Synergy Composer",spec:"Software-defined composable infra mgmt, per-frame",unitPrice:15000},
-    {id:"hv-proxmox",name:"Proxmox VE Enterprise",spec:"Per-socket/yr, KVM+LXC, ceph storage, HA cluster",unitPrice:1200},
-    {id:"hv-xcp-ng",name:"XCP-ng + Xen Orchestra",spec:"Open-source Xen, enterprise support, per-socket",unitPrice:800},
-  ]},
-  licenses:{label:"Licenses",icon:"📋",color:"#f59e0b",items:[
-    {id:"lic-win-srv",name:"Windows Server Datacenter",spec:"Per 2-core, SA 3yr, unlimited VMs",unitPrice:6200},
-    {id:"lic-rhel",name:"RHEL Server Premium",spec:"2-socket, Priority support, 3yr",unitPrice:2800},
-    {id:"lic-suse",name:"SUSE Linux Enterprise",spec:"2-socket, Priority support, 3yr",unitPrice:1800},
-    {id:"lic-antivirus",name:"Endpoint Protection Suite",spec:"CrowdStrike/Symantec, per node, 3yr",unitPrice:120},
-    {id:"lic-citrix",name:"Citrix Virtual Apps & Desktops",spec:"Per-CCU Premium, 3yr SA",unitPrice:350},
-  ]},
-  power:{label:"Power & Cooling",icon:"⚡",color:"#f59e0b",items:[
-    {id:"pwr-ups-10k",name:"UPS 10kVA Modular",spec:"Online double-conversion, N+1 ready",unitPrice:8500},
-    {id:"pwr-ups-80k",name:"UPS 80kVA 3-Phase",spec:"Online, scalable, SNMP managed",unitPrice:52000},
-    {id:"pwr-pdu-basic",name:"Basic PDU",spec:"0U vertical, 32A, C13/C19 outlets",unitPrice:450},
-    {id:"pwr-pdu-smart",name:"Smart PDU",spec:"Switched+metered, per-outlet, SNMP",unitPrice:1800},
-    {id:"pwr-crac",name:"CRAC Unit 50kW",spec:"Precision cooling, N+1 EC fans",unitPrice:28000},
-    {id:"pwr-gen",name:"Diesel Generator 500kVA",spec:"Auto-transfer, 48hr fuel tank",unitPrice:85000},
-  ]},
-  rack:{label:"Rack & Stack",icon:"🏗️",color:"#6b7280",items:[
-    {id:"rack-42u",name:"42U Server Rack",spec:"800x1000mm, 1200kg rated, blanking panels",unitPrice:1200},
-    {id:"rack-48u",name:"48U Network Cabinet",spec:"600x800mm, vented, lockable",unitPrice:950},
-    {id:"rack-cable-mgr",name:"Cable Management Kit",spec:"Horizontal+vertical per rack",unitPrice:320},
-    {id:"rack-kvm",name:"KVM Switch 16-port IP",spec:"IP-based, multi-platform, 4K",unitPrice:2800},
-    {id:"rack-install",name:"Rack Integration Services",spec:"Cabling, labeling, documentation",unitPrice:3500},
-    {id:"rack-amc",name:"AMC / Support Contract 1yr",spec:"24x7 onsite, 4-hour SLA",unitPrice:18000},
-  ]},
-};
-
-const BRAND_COLORS={cisco:"#1ba0d7",juniper:"#84ba27",aruba:"#f96c1b",fortinet:"#e7222e",f5:"#e5002b",paloalto:"#fa582d"};
-const BRAND_LABELS={cisco:"CISCO",juniper:"JUNIPER",aruba:"ARUBA",fortinet:"FORTINET",f5:"F5",paloalto:"PALO ALTO"};
-
-const fmt=(n)=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(n);
 const computeServerPrice=(cfg)=>{
   const brand=SERVER_BRANDS[cfg.brand];if(!brand)return 0;
   const sd=brand.series[cfg.series];if(!sd)return 0;
@@ -417,28 +287,86 @@ const computeServerPrice=(cfg)=>{
   return(model.basePrice+cpu.priceAdder*cfg.cpuCount+ram.priceAdder+sto.priceAdder+nic.priceAdder+gpu.priceAdder+os.priceAdder+sup.priceAdder+psu.priceAdder)*cfg.qty;
 };
 
+function buildBoqReportData({projectInfo,serverConfigs,infraSelections,grandTotal,serverTotal,infraTotal,seg,rec}){
+  const tax=grandTotal*0.18,total=grandTotal+tax;
+  const refNo=`BOQ-${Date.now().toString(36).toUpperCase()}`;
+  const today=new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"long",year:"numeric"});
+  const serverLines=serverConfigs.map((cfg)=>{
+    const brand=SERVER_BRANDS[cfg.brand];
+    const model=brand?.series[cfg.series]?.models.find(m=>m.id===cfg.modelId);
+    const cpuList=cfg.cpuType==="amd"?CPU_OPTIONS.amd:CPU_OPTIONS.intel;
+    const cpu=cpuList.find(c=>c.id===cfg.cpuId);
+    const ram=RAM_OPTIONS.find(r=>r.id===cfg.ramId);
+    const sto=STORAGE_OPT.find(s=>s.id===cfg.storageId);
+    const nic=NIC_OPT.find(n=>n.id===cfg.nicId);
+    const gpu=GPU_OPT.find(g=>g.id===cfg.gpuId);
+    const os=OS_OPT.find(o=>o.id===cfg.osId);
+    const sup=SUPPORT_OPT.find(s=>s.id===cfg.supportId);
+    const psu=PSU_OPT.find(p=>p.id===cfg.psuId);
+    const up=computeServerPrice({...cfg,qty:1});
+    const spec=[cpu?`${cfg.cpuCount}x ${cpu.label}`:null,ram?.label,sto?.label,nic?.label,gpu?.id!=="gpu-none"?gpu?.label:null,os?.id!=="os-none"?os?.label:null,psu?.label,sup?.label].filter(Boolean).join(" | ");
+    return{category:brand?.label||"Server",color:brand?.color||"#1e40af",icon:"🖥️",name:model?.name||"-",spec,unitPrice:up,qty:cfg.qty,total:up*cfg.qty};
+  });
+  const infraLines=[];
+  Object.entries(infraSelections).forEach(([layer,items])=>{
+    const cat=INFRA_CATALOGUE[layer];
+    if(!cat)return;
+    Object.entries(items).forEach(([id,qty])=>{if(qty>0){const item=cat.items.find(i=>i.id===id);if(item)infraLines.push({category:cat.label,color:cat.color,icon:cat.icon,name:item.name,spec:item.spec,unitPrice:item.unitPrice,qty,total:item.unitPrice*qty});}});
+  });
+  const allLines=[...serverLines,...infraLines];
+  const payload: BoqPdfPayload = {
+    projectInfo,
+    refNo,
+    today,
+    segmentLabel:seg?.label,
+    rationale:rec?.rationale,
+    allLines,
+    serverTotal,
+    infraTotal,
+    grandTotal,
+    tax,
+    total,
+  };
+  return {payload,allLines,refNo,today,tax,total};
+}
+
 function BrandBadge({brand}){
   if(!brand)return null;
   return <span style={{borderRadius:3,padding:"2px 7px",fontSize:9,fontWeight:700,background:BRAND_COLORS[brand]||"#7c3aed",color:"#fff",letterSpacing:0.5,flexShrink:0,whiteSpace:"nowrap"}}>{BRAND_LABELS[brand]||brand.toUpperCase()}</span>;
 }
 
-export default function App(){
-  
-  const [appStep,setAppStep]=useState("segment");
-  const [activeTab,setActiveTab]=useState("servers");
+function Configurator(){
+  const { segmentId, tab } = useParams();
+  const navigate = useNavigate();
   const [segKey,setSegKey]=useState(null);
   const [projectInfo,setProjectInfo]=useState({name:"",client:"",date:new Date().toISOString().slice(0,10),engineer:"",notes:""});
   const [serverConfigs,setServerConfigs]=useState([]);
   const [infraSelections,setInfraSelections]=useState({});
   const [aiBoqResult,setAiBoqResult]=useState(null);
 
-  const applyRec=(sk)=>{
-    const rec=SEGMENT_RECOMMENDATIONS[sk];
+  const activeTab = tab === "report" ? "servers" : (tab || "servers");
+  const validTabs = ["servers", ...Object.keys(INFRA_CATALOGUE), "ai-result"];
+
+  useEffect(()=>{
+    if(!segmentId || !SEGMENTS[segmentId]) return;
+    if(segKey === segmentId) return;
+    const rec=SEGMENT_RECOMMENDATIONS[segmentId];
     setServerConfigs([{...rec.servers}]);
     const ni={};
     Object.entries(rec).forEach(([l,d])=>{if(l==="servers"||l==="rationale")return;ni[l]={};d.items.forEach(id=>{ni[l][id]=1;});});
-    setInfraSelections(ni);setSegKey(sk);setAppStep("configure");setActiveTab("servers");
-  };
+    setInfraSelections(ni);
+    setSegKey(segmentId);
+  },[segmentId, segKey]);
+
+  useEffect(()=>{
+    const stored=sessionStorage.getItem("aiBoqResult");
+    if(stored){
+      try{setAiBoqResult(JSON.parse(stored));sessionStorage.removeItem("aiBoqResult");}catch{}
+    }
+  },[]);
+
+  if(!segmentId || !SEGMENTS[segmentId]) return <Navigate to="/segments" replace />;
+  if(tab && tab !== "report" && !validTabs.includes(tab)) return <Navigate to={`/segments/${segmentId}/servers`} replace />;
 
   const addServer=()=>{const rec=SEGMENT_RECOMMENDATIONS[segKey]?.servers||{};const brand=SERVER_BRANDS[rec.brand||"dell"];const sk=rec.series||Object.keys(brand.series)[0];setServerConfigs(p=>[...p,{...rec,brand:rec.brand||"dell",series:sk,modelId:rec.modelId||brand.series[sk].models[0].id,qty:1}]);};
   const removeServer=(i)=>setServerConfigs(p=>p.filter((_,idx)=>idx!==i));
@@ -448,72 +376,94 @@ export default function App(){
   const serverTotal=serverConfigs.reduce((a,c)=>a+computeServerPrice(c),0);
   const infraTotal=Object.entries(infraSelections).reduce((t,[layer,items])=>t+Object.entries(items).reduce((s,[id,qty])=>{const item=INFRA_CATALOGUE[layer]?.items.find(i=>i.id===id);return s+(item?item.unitPrice*qty:0);},0),0);
   const grandTotal=serverTotal+infraTotal;
-  const seg=segKey?SEGMENTS[segKey]:null;
-  const rec=segKey?SEGMENT_RECOMMENDATIONS[segKey]:null;
+  const seg=segmentId?SEGMENTS[segmentId]:null;
+  const rec=segmentId?SEGMENT_RECOMMENDATIONS[segmentId]:null;
 
-  if(appStep==="segment")return <SegmentScreen onSelect={applyRec} onAI={()=>setAppStep("ai")}/>;
-  if(appStep==="ai")return <AIScreen onBack={()=>setAppStep("segment")} onResult={(res)=>{setAiBoqResult(res);setAppStep("configure");setActiveTab("ai-result");}}/>;
-  if(appStep==="report")return <ReportView projectInfo={projectInfo} serverConfigs={serverConfigs} infraSelections={infraSelections} grandTotal={grandTotal} serverTotal={serverTotal} infraTotal={infraTotal} seg={seg} rec={rec} fmt={fmt} onBack={()=>setAppStep("configure")}/>;
+  const handleGenerateBoq=()=>{
+    if(grandTotal<=0)return;
+    const {payload}=buildBoqReportData({projectInfo,serverConfigs,infraSelections,grandTotal,serverTotal,infraTotal,seg,rec});
+    try{
+      downloadBoqPdf(payload);
+      navigate(`/segments/${segmentId}/report`);
+    }catch(err){
+      console.error("PDF generation failed:",err);
+      alert(err instanceof Error?err.message:"Could not generate PDF. Try Download PDF on the report page.");
+      navigate(`/segments/${segmentId}/report`);
+    }
+  };
+
+  if(tab==="report"){
+    const report=buildBoqReportData({projectInfo,serverConfigs,infraSelections,grandTotal,serverTotal,infraTotal,seg,rec});
+    return <ReportView report={report} projectInfo={projectInfo} serverConfigs={serverConfigs} infraSelections={infraSelections} grandTotal={grandTotal} serverTotal={serverTotal} infraTotal={infraTotal} seg={seg} rec={rec} fmt={fmt} onBack={()=>navigate(`/segments/${segmentId}/servers`)}/>;
+  }
 
   const TABS=[{key:"servers",label:"Servers",icon:"🖥️"},...Object.entries(INFRA_CATALOGUE).map(([k,v])=>({key:k,label:v.label,icon:v.icon})),{key:"ai-result",label:"AI BOQ",icon:"🤖"}];
 
   return(
-    <div style={{fontFamily:"'Outfit',sans-serif",background:"#f0f7ff",minHeight:"100vh",color:"#1e3a5f"}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#93c5fd;border-radius:3px}@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}.fade{animation:fadeIn 0.25s ease forwards}select,input,textarea{font-family:inherit!important}`}</style>
-      <header style={{background:"#fff",borderBottom:"1px solid #bfdbfe",padding:"0 1.5rem",height:56,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:200,boxShadow:"0 1px 8px #1e40af10"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <div style={{width:32,height:32,background:"linear-gradient(135deg,#1e40af,#06b6d4)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>⚡</div>
+    <div className="boq-app">
+      <header className="boq-header">
+        <div className="boq-header-left">
+          <div className="boq-mark" aria-hidden>SN</div>
           <div>
-            <div style={{fontWeight:700,fontSize:14,color:"#0c1f3d",lineHeight:1}}>DC-BOQ Pro</div>
-            <div style={{fontSize:9,color:"#7aa3c0",fontFamily:"'JetBrains Mono',monospace",letterSpacing:1}}>v9 · OEM NETWORK · MULTI-HYPERVISOR · AI</div>
+            <div className="boq-brand-title">Sniper Presales</div>
+            <div className="boq-brand-sub">BOQ Configurator · v9</div>
           </div>
-          {seg&&<span style={{background:`${seg.color}20`,border:`1px solid ${seg.color}40`,borderRadius:4,padding:"2px 9px",fontSize:10,color:seg.color,fontWeight:600,marginLeft:4}}>{seg.icon} {seg.label}</span>}
+          {seg&&<span className="boq-badge">{seg.icon} {seg.label}</span>}
         </div>
-        <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          <button onClick={()=>setAppStep("ai")} style={{padding:"5px 12px",borderRadius:5,border:"1px solid #a855f740",background:"#a855f710",color:"#a855f7",cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:600}}>🤖 AI BOQ</button>
-          <button onClick={()=>setAppStep("segment")} style={{padding:"5px 12px",borderRadius:5,border:"1px solid #bfdbfe",background:"transparent",color:"#4b7fa6",cursor:"pointer",fontSize:11,fontFamily:"inherit"}}>↩ Segments</button>
-          <div style={{background:"linear-gradient(135deg,#1e40af,#0369a1)",borderRadius:16,padding:"4px 14px",display:"flex",alignItems:"center",gap:6}}>
-            <span style={{fontSize:9,color:"#bfdbfe",fontFamily:"'JetBrains Mono',monospace"}}>TOTAL</span>
-            <span style={{fontSize:13,fontWeight:700,color:"#fff",fontFamily:"'JetBrains Mono',monospace"}}>{fmt(grandTotal)}</span>
+        <div className="boq-header-actions">
+          <Link to="/" className="boq-btn boq-btn-ghost">Home</Link>
+          <button type="button" onClick={()=>navigate("/ai")} className="boq-btn boq-btn-ghost">AI BOQ</button>
+          <button type="button" onClick={()=>navigate("/segments")} className="boq-btn boq-btn-ghost">Segments</button>
+          <div className="boq-total-pill">
+            <span>TOTAL</span>
+            <span>{fmt(grandTotal)}</span>
           </div>
-          <button onClick={()=>setAppStep("report")} disabled={grandTotal===0} style={{padding:"7px 18px",borderRadius:5,border:"none",background:grandTotal>0?"linear-gradient(135deg,#1e40af,#06b6d4)":"#bfdbfe",color:grandTotal>0?"#fff":"#93c5fd",cursor:grandTotal>0?"pointer":"not-allowed",fontWeight:700,fontSize:12,fontFamily:"inherit"}}>Generate BOQ →</button>
+          <button type="button" onClick={handleGenerateBoq} disabled={grandTotal===0} className="boq-btn boq-btn-primary">Generate BOQ →</button>
         </div>
       </header>
       <HypervisorSelector infraSelections={infraSelections} updateInfraQty={updateInfraQty} rec={rec} seg={seg}/>
-      <div style={{display:"flex",maxWidth:1600,margin:"0 auto"}}>
-        <aside style={{width:205,padding:"1rem 0.8rem",position:"sticky",top:56,height:"calc(100vh - 56px)",overflowY:"auto",borderRight:"1px solid #bfdbfe",flexShrink:0,background:"#fff"}}>
-          <div style={{marginBottom:16}}>
-            <div style={{fontSize:9,color:"#7aa3c0",letterSpacing:2,textTransform:"uppercase",marginBottom:8,fontWeight:600}}>Project Details</div>
-            {[["name","Project Name"],["client","Client"],["engineer","Engineer"],["date","Date"]].map(([f,l])=>(
-              <div key={f} style={{marginBottom:6}}>
-                <label style={{fontSize:9,color:"#7aa3c0",display:"block",marginBottom:2}}>{l}</label>
-                <input type={f==="date"?"date":"text"} value={projectInfo[f]} onChange={e=>setProjectInfo(p=>({...p,[f]:e.target.value}))} style={{width:"100%",background:"#f0f7ff",border:"1px solid #bfdbfe",borderRadius:4,padding:"5px 7px",color:"#1e3a5f",fontSize:10,fontFamily:"'JetBrains Mono',monospace"}}/>
+      <div className="boq-layout">
+        <aside className="boq-sidebar">
+          <div className="boq-form-card">
+            <div className="boq-form-card-header">
+              <h2>Project Details</h2>
+              <p>Metadata included on your BOQ document</p>
+            </div>
+            <div className="boq-form-body">
+            {[["name","Project Name","Acme DC Expansion"],["client","Client / Organization",""],["engineer","Presales Engineer",""],["date","Quote Date",""]].map(([f,l,ph])=>(
+              <div key={f} className="boq-form-field" style={{marginBottom:"0.85rem"}}>
+                <label className="boq-label" htmlFor={`proj-${f}`}>{l}</label>
+                <input id={`proj-${f}`} type={f==="date"?"date":"text"} className={`boq-input${f==="date"?"":" boq-input-mono"}`} placeholder={ph} value={projectInfo[f]} onChange={e=>setProjectInfo(p=>({...p,[f]:e.target.value}))}/>
               </div>
             ))}
-            <div>
-              <label style={{fontSize:9,color:"#7aa3c0",display:"block",marginBottom:2}}>Notes</label>
-              <textarea value={projectInfo.notes} onChange={e=>setProjectInfo(p=>({...p,notes:e.target.value}))} rows={2} style={{width:"100%",background:"#f0f7ff",border:"1px solid #bfdbfe",borderRadius:4,padding:"5px 7px",color:"#1e3a5f",fontSize:10,fontFamily:"inherit",resize:"vertical"}}/>
+            <div className="boq-form-field">
+              <label className="boq-label" htmlFor="proj-notes">Notes</label>
+              <textarea id="proj-notes" className="boq-textarea" rows={3} placeholder="Scope, assumptions, special requirements..." value={projectInfo.notes} onChange={e=>setProjectInfo(p=>({...p,notes:e.target.value}))}/>
+            </div>
             </div>
           </div>
-          <div style={{fontSize:9,color:"#7aa3c0",letterSpacing:2,textTransform:"uppercase",marginBottom:8,fontWeight:600}}>Infrastructure Layers</div>
+          <div className="boq-divider"/>
+          <p className="boq-label" style={{marginBottom:"0.5rem"}}>Infrastructure Layers</p>
+          <nav className="boq-nav-tabs">
           {TABS.map(t=>{
             const hasRec=t.key==="servers"?(serverConfigs.length>0):t.key==="ai-result"?!!aiBoqResult:(infraSelections[t.key]&&Object.keys(infraSelections[t.key]).length>0);
-            const isActive=activeTab===t.key;
+            const isActive=(tab||"servers")===t.key;
             return(
-              <button key={t.key} onClick={()=>setActiveTab(t.key)} style={{width:"100%",display:"flex",alignItems:"center",gap:7,padding:"7px 9px",borderRadius:6,border:"1px solid",borderColor:isActive?"#bfdbfe":"transparent",background:isActive?"linear-gradient(135deg,#e8f2fb,#dbeafe)":"transparent",color:isActive?"#0f2644":t.key==="ai-result"?"#a855f7":"#4b7fa6",cursor:"pointer",marginBottom:3,textAlign:"left",transition:"all 0.12s",fontWeight:isActive?600:400}}>
-                <span style={{fontSize:13}}>{t.icon}</span>
-                <span style={{fontSize:11,flex:1}}>{t.label}</span>
-                {hasRec&&<span style={{width:7,height:7,borderRadius:"50%",background:t.key==="ai-result"?"#a855f7":seg?.color||"#06b6d4",flexShrink:0,boxShadow:`0 0 4px ${t.key==="ai-result"?"#a855f7":seg?.color||"#06b6d4"}`}}/>}
+              <button key={t.key} type="button" onClick={()=>navigate(`/segments/${segmentId}/${t.key}`)} className={`boq-nav-tab${isActive?" boq-nav-tab-active":""}`} >
+                <span>{t.icon}</span>
+                <span style={{flex:1}}>{t.label}</span>
+                {hasRec&&<span className="boq-nav-dot" />}
               </button>
             );
           })}
+          </nav>
         </aside>
-        <main style={{flex:1,padding:"1.5rem",overflowY:"auto",background:"#f0f7ff"}} className="fade" key={activeTab}>
+        <main className="boq-main boq-fade" key={activeTab}>
           {activeTab==="ai-result"
-            ?<AIResultPanel result={aiBoqResult} fmt={fmt} onRerun={()=>setAppStep("ai")}/>
+            ?<AIResultPanel result={aiBoqResult} fmt={fmt} onRerun={()=>navigate("/ai")}/>
             :activeTab==="servers"
             ?<ServerPanel configs={serverConfigs} updateConfig={updateServer} addConfig={addServer} removeConfig={removeServer} seg={seg} rec={rec} fmt={fmt}/>
-            :<InfraPanel cat={INFRA_CATALOGUE[activeTab]} selections={infraSelections[activeTab]||{}} updateQty={(id,d)=>updateInfraQty(activeTab,id,d)} rec={rec?.[activeTab]} seg={seg} fmt={fmt}/>
+            :<InfraPanel cat={INFRA_CATALOGUE[activeTab]} categoryKey={activeTab} selections={infraSelections[activeTab]||{}} updateQty={(id,d)=>updateInfraQty(activeTab,id,d)} rec={rec?.[activeTab]} seg={seg} fmt={fmt}/>
           }
         </main>
       </div>
@@ -612,35 +562,35 @@ function HypervisorSelector({infraSelections,updateInfraQty,rec,seg}){
 function SegmentScreen({onSelect,onAI}){
   const [hov,setHov]=useState(null);
   return(
-    <div style={{fontFamily:"'Outfit',sans-serif",background:"linear-gradient(160deg,#e8f2fb 0%,#f0f7ff 60%,#dbeafe 100%)",minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"3rem 2rem"}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');*{box-sizing:border-box;margin:0;padding:0}`}</style>
-      <div style={{textAlign:"center",marginBottom:40}}>
-        <div style={{display:"inline-flex",alignItems:"center",gap:14,marginBottom:24}}>
-          <div style={{width:58,height:58,background:"linear-gradient(135deg,#1e40af,#06b6d4)",borderRadius:16,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,boxShadow:"0 8px 32px #1e40af30"}}>⚡</div>
-          <div style={{textAlign:"left"}}>
-            <div style={{fontWeight:800,fontSize:26,color:"#0c1f3d",letterSpacing:-0.5}}>DC-BOQ Pro</div>
-            <div style={{fontSize:10,color:"#7aa3c0",letterSpacing:3,textTransform:"uppercase",fontFamily:"'JetBrains Mono',monospace"}}>v9 · OEM Network · Multi-Hypervisor · AI BOQ</div>
+    <div className="boq-app boq-page-gradient boq-segment-page">
+      <Link to="/" className="boq-btn boq-btn-ghost boq-back-link">← Home</Link>
+      <div className="boq-segment-hero">
+        <div className="boq-segment-brand">
+          <div className="boq-mark boq-logo-lg" aria-hidden>SN</div>
+          <div>
+            <div className="boq-page-title" style={{fontSize:"1.5rem",marginBottom:0}}>Sniper Presales</div>
+            <div className="boq-brand-sub">Segment index</div>
           </div>
         </div>
-        <h1 style={{fontWeight:800,fontSize:30,color:"#0c1f3d",marginBottom:12,letterSpacing:-0.5}}>Select Your Industry Vertical</h1>
-        <p style={{color:"#5a85a8",fontSize:13,maxWidth:560,margin:"0 auto",lineHeight:1.9}}>Choose a segment for a pre-configured full-stack — servers, OEM network, storage, hypervisor, monitoring and more — or let AI build it from your requirements.</p>
-        <button onClick={onAI} style={{marginTop:20,padding:"11px 30px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#a855f7,#6366f1)",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"inline-flex",alignItems:"center",gap:8,boxShadow:"0 4px 20px #a855f730"}}>
-          🤖 Generate BOQ from My Requirements
+        <h1 className="boq-page-title">Select Your Industry Vertical</h1>
+        <p className="boq-page-lead">Choose a segment for a pre-configured full-stack — servers, OEM network, storage, hypervisor, monitoring and more — or let AI build it from your requirements.</p>
+        <button type="button" onClick={onAI} className="boq-btn boq-btn-accent boq-btn-lg" style={{width:"auto",maxWidth:320,marginTop:"1rem"}}>
+          Draft from requirements
         </button>
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(195px,1fr))",gap:12,maxWidth:1100,width:"100%"}}>
+      <div className="boq-segment-grid">
         {Object.entries(SEGMENTS).map(([key,seg])=>{
           const rc=Object.values(SEGMENT_RECOMMENDATIONS[key]).reduce((a,v)=>typeof v==="object"&&v.items?a+v.items.length:a,0);
+          const active=hov===key;
           return(
-            <button key={key} onClick={()=>onSelect(key)} onMouseEnter={()=>setHov(key)} onMouseLeave={()=>setHov(null)}
-              style={{background:hov===key?`${seg.color}10`:"#fff",border:`1.5px solid ${hov===key?seg.color:"#bfdbfe"}`,borderRadius:14,padding:"20px 18px",cursor:"pointer",textAlign:"left",transition:"all 0.18s",transform:hov===key?"translateY(-4px)":"none",boxShadow:hov===key?`0 12px 32px ${seg.color}20`:"0 1px 4px #1e40af08"}}>
-              <div style={{fontSize:30,marginBottom:12}}>{seg.icon}</div>
-              <div style={{fontWeight:700,fontSize:13,color:"#0f2644",marginBottom:5}}>{seg.label}</div>
-              <div style={{fontSize:10,color:"#7aa3c0",lineHeight:1.6,marginBottom:12}}>{seg.description}</div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:10,borderTop:`1px solid ${seg.color}25`}}>
-                <span style={{fontSize:9,color:seg.color,fontFamily:"'JetBrains Mono',monospace",fontWeight:600}}>~{rc} components</span>
-                <span style={{fontSize:15,color:seg.color,fontWeight:700}}>→</span>
-              </div>
+            <button key={key} type="button" onClick={()=>onSelect(key)} onMouseEnter={()=>setHov(key)} onMouseLeave={()=>setHov(null)}
+              className={`boq-segment-card${active?" boq-segment-card-active":""}`}>
+              <span className="boq-seg-icon">{seg.icon}</span>
+              <span>
+                <span className="boq-index-label">{seg.label}</span>
+                <span className="boq-index-desc">{seg.description}</span>
+              </span>
+              <span className="boq-index-meta">~{rc} · →</span>
             </button>
           );
         })}
@@ -650,9 +600,9 @@ function SegmentScreen({onSelect,onAI}){
 }
 
 function ServerPanel({configs,updateConfig,addConfig,removeConfig,seg,rec,fmt}){
-  const Sel=({value,onChange,children,mono})=>(<select value={value} onChange={e=>onChange(e.target.value)} style={{width:"100%",background:"#f0f7ff",border:"1px solid #bfdbfe",borderRadius:5,padding:"6px 8px",color:"#1e3a5f",fontSize:11,fontFamily:mono?"'JetBrains Mono',monospace":"inherit",cursor:"pointer"}}>{children}</select>);
-  const F=({label,children})=>(<div style={{marginBottom:10}}><label style={{fontSize:9,color:"#7aa3c0",display:"block",marginBottom:3,letterSpacing:0.5,textTransform:"uppercase",fontWeight:600}}>{label}</label>{children}</div>);
-  const TB=({active,color,onClick,children})=>(<button onClick={onClick} style={{flex:1,padding:"6px 4px",borderRadius:5,border:`1.5px solid ${active?color:"#bfdbfe"}`,background:active?`${color}18`:"#fff",color:active?color:"#7aa3c0",cursor:"pointer",fontSize:10,fontFamily:"inherit",fontWeight:active?700:400,transition:"all 0.1s"}}>{children}</button>);
+  const Sel=({value,onChange,children,mono})=>(<select value={value} onChange={e=>onChange(e.target.value)} className={`boq-select${mono?" boq-input-mono":""}`}>{children}</select>);
+  const F=({label,children})=>(<div className="boq-form-field"><label className="boq-label">{label}</label>{children}</div>);
+  const TB=({active,color,onClick,children})=>(<button type="button" onClick={onClick} className="boq-toggle-btn" style={{flex:1,borderColor:active?color:undefined,background:active?`${color}18`:undefined,color:active?color:undefined,fontWeight:active?700:500}}>{children}</button>);
   return(
     <div>
       {seg&&rec&&(
@@ -664,9 +614,9 @@ function ServerPanel({configs,updateConfig,addConfig,removeConfig,seg,rec,fmt}){
           <div style={{fontSize:11,color:"#5a85a8",lineHeight:1.7}}>💡 {rec.servers.reason}</div>
         </div>
       )}
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-        <h2 style={{fontWeight:700,fontSize:16,color:"#0f2644"}}>🖥️ Server Configuration</h2>
-        <button onClick={addConfig} style={{padding:"7px 14px",borderRadius:6,border:"1.5px dashed #bfdbfe",background:"transparent",color:"#1e40af",cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:600}}>+ Add Server Row</button>
+      <div className="boq-panel-toolbar">
+        <h2 className="boq-panel-title">🖥️ Server Configuration</h2>
+        <button type="button" onClick={addConfig} className="boq-btn boq-btn-ghost">+ Add Server Row</button>
       </div>
       {configs.map((cfg,idx)=>{
         const brand=SERVER_BRANDS[cfg.brand];
@@ -722,7 +672,7 @@ function ServerPanel({configs,updateConfig,addConfig,removeConfig,seg,rec,fmt}){
   );
 }
 
-function InfraPanel({cat,selections,updateQty,rec,seg,fmt}){
+function InfraPanel({cat,categoryKey,selections,updateQty,rec,seg,fmt}){
   const isHypervisor = cat.label === "Hypervisor / Virtualisation";
   const [selectedVendor,setSelectedVendor] = useState(null);
   const [brandFilter,setBrandFilter]=useState("all");
@@ -817,6 +767,7 @@ function InfraPanel({cat,selections,updateQty,rec,seg,fmt}){
                       <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:5,flexWrap:"wrap"}}>
                         {isRec&&<span style={{background:`${seg?.color}25`,border:`1px solid ${seg?.color}50`,borderRadius:4,padding:"2px 7px",fontSize:9,color:seg?.color,fontWeight:700,flexShrink:0}}>★ RECOMMENDED</span>}
                         <span style={{fontWeight:700,fontSize:13,color:"#0f2644"}}>{item.name}</span>
+                        {categoryKey&&<Link to={`/products/${categoryKey}/${item.id}`} style={{fontSize:9,color:vColor,textDecoration:"none",fontWeight:600}}>View →</Link>}
                       </div>
                       <div style={{fontSize:11,color:"#7aa3c0",marginBottom:reason?6:0,lineHeight:1.5}}>{item.spec}</div>
                       {reason&&<div style={{fontSize:10,color:"#1e3a5f",background:"#e8f2fb",borderRadius:6,padding:"6px 10px",borderLeft:`3px solid ${seg?.color||vColor}`,lineHeight:1.6,fontWeight:500}}>💡 {reason}</div>}
@@ -911,6 +862,7 @@ function InfraPanel({cat,selections,updateQty,rec,seg,fmt}){
                   {isRec&&<span style={{background:`${seg?.color}25`,border:`1px solid ${seg?.color}50`,borderRadius:4,padding:"2px 7px",fontSize:9,color:seg?.color,fontWeight:700,flexShrink:0}}>★ RECOMMENDED</span>}
                   <BrandBadge brand={item.brand}/>
                   <span style={{fontWeight:700,fontSize:13,color:"#0f2644"}}>{item.name}</span>
+                  {categoryKey&&<Link to={`/products/${categoryKey}/${item.id}`} style={{fontSize:9,color:cat.color,textDecoration:"none",fontWeight:600}}>View →</Link>}
                 </div>
                 <div style={{fontSize:11,color:"#7aa3c0",marginBottom:reason?6:0,lineHeight:1.5}}>{item.spec}</div>
                 {reason&&<div style={{fontSize:10,color:"#1e3a5f",background:"#e8f2fb",borderRadius:6,padding:"6px 10px",borderLeft:`3px solid ${seg?.color||cat.color}`,lineHeight:1.6,fontWeight:500}}>💡 {reason}</div>}
@@ -936,39 +888,30 @@ function InfraPanel({cat,selections,updateQty,rec,seg,fmt}){
   );
 }
 
-function ReportView({projectInfo,serverConfigs,infraSelections,grandTotal,serverTotal,infraTotal,seg,rec,fmt,onBack}){
-  const tax=grandTotal*0.18,total=grandTotal+tax;
-  const refNo=`BOQ-${Date.now().toString(36).toUpperCase()}`;
-  const today=new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"long",year:"numeric"});
-  const serverLines=serverConfigs.map((cfg)=>{
-    const brand=SERVER_BRANDS[cfg.brand];
-    const model=brand?.series[cfg.series]?.models.find(m=>m.id===cfg.modelId);
-    const cpuList=cfg.cpuType==="amd"?CPU_OPTIONS.amd:CPU_OPTIONS.intel;
-    const cpu=cpuList.find(c=>c.id===cfg.cpuId);
-    const ram=RAM_OPTIONS.find(r=>r.id===cfg.ramId);
-    const sto=STORAGE_OPT.find(s=>s.id===cfg.storageId);
-    const nic=NIC_OPT.find(n=>n.id===cfg.nicId);
-    const gpu=GPU_OPT.find(g=>g.id===cfg.gpuId);
-    const os=OS_OPT.find(o=>o.id===cfg.osId);
-    const sup=SUPPORT_OPT.find(s=>s.id===cfg.supportId);
-    const psu=PSU_OPT.find(p=>p.id===cfg.psuId);
-    const up=computeServerPrice({...cfg,qty:1});
-    const spec=[cpu?`${cfg.cpuCount}x ${cpu.label}`:null,ram?.label,sto?.label,nic?.label,gpu?.id!=="gpu-none"?gpu?.label:null,os?.id!=="os-none"?os?.label:null,psu?.label,sup?.label].filter(Boolean).join(" | ");
-    return{category:brand?.label||"Server",color:brand?.color||"#1e40af",icon:"🖥️",name:model?.name||"—",spec,unitPrice:up,qty:cfg.qty,total:up*cfg.qty};
-  });
-  const infraLines=[];
-  Object.entries(infraSelections).forEach(([layer,items])=>{
-    const cat=INFRA_CATALOGUE[layer];
-    Object.entries(items).forEach(([id,qty])=>{if(qty>0){const item=cat.items.find(i=>i.id===id);if(item)infraLines.push({category:cat.label,color:cat.color,icon:cat.icon,...item,qty,total:item.unitPrice*qty});}});
-  });
-  const allLines=[...serverLines,...infraLines];
+function ReportView({report,projectInfo,serverConfigs,infraSelections,grandTotal,serverTotal,infraTotal,seg,rec,fmt,onBack}){
+  const {allLines,refNo,today,tax,total,payload}=report;
+  const [pdfError,setPdfError]=useState("");
+
+  const handleDownloadPdf=()=>{
+    setPdfError("");
+    try{
+      downloadBoqPdf(payload);
+    }catch(err){
+      const msg=err instanceof Error?err.message:"Could not generate PDF";
+      setPdfError(msg);
+      console.error("PDF download failed:",err);
+    }
+  };
+
   return(
     <div style={{maxWidth:1100,margin:"0 auto",padding:"2rem",fontFamily:"'Outfit',sans-serif"}}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');*{box-sizing:border-box}@media print{.no-print{display:none!important}}`}</style>
-      <div style={{display:"flex",gap:10,marginBottom:20}} className="no-print">
+      <div style={{display:"flex",gap:10,marginBottom:20,flexWrap:"wrap"}} className="no-print">
         <button onClick={onBack} style={{padding:"9px 18px",borderRadius:7,border:"1px solid #bfdbfe",background:"#fff",color:"#1e40af",cursor:"pointer",fontSize:12,fontFamily:"inherit",fontWeight:600}}>← Back</button>
-        <button onClick={()=>window.print()} style={{padding:"9px 18px",borderRadius:7,border:"none",background:"linear-gradient(135deg,#1e40af,#06b6d4)",color:"#fff",cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"inherit"}}>🖨 Print / Save PDF</button>
+        <button onClick={handleDownloadPdf} style={{padding:"9px 18px",borderRadius:7,border:"none",background:"linear-gradient(135deg,#059669,#047857)",color:"#fff",cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"inherit"}}>⬇ Download PDF</button>
+        <button onClick={()=>window.print()} style={{padding:"9px 18px",borderRadius:7,border:"1px solid #bfdbfe",background:"#f0f7ff",color:"#1e40af",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"inherit"}}>🖨 Print / Save PDF</button>
       </div>
+      {pdfError&&<div style={{marginBottom:16,padding:"12px 16px",background:"#fff1f2",border:"1.5px solid #fecdd3",borderRadius:8,fontSize:12,color:"#be123c"}}>{pdfError}</div>}
       <div style={{background:"#fff",color:"#111",borderRadius:16,overflow:"hidden",boxShadow:"0 20px 60px rgba(30,64,175,0.15)"}}>
         <div style={{background:"linear-gradient(135deg,#1e3a8a 0%,#0369a1 100%)",padding:"36px 44px"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
@@ -976,7 +919,7 @@ function ReportView({projectInfo,serverConfigs,infraSelections,grandTotal,server
               <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
                 <div style={{width:42,height:42,background:"rgba(255,255,255,0.2)",borderRadius:11,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,border:"1px solid rgba(255,255,255,0.3)"}}>⚡</div>
                 <div>
-                  <div style={{fontWeight:800,fontSize:18,color:"#ffffff"}}>DC-BOQ Pro v9</div>
+                  <div style={{fontWeight:800,fontSize:18,color:"#ffffff"}}>Sniper Presales v9</div>
                   <div style={{fontSize:9,color:"#93c5fd",letterSpacing:3,textTransform:"uppercase",fontFamily:"'JetBrains Mono',monospace"}}>BILL OF QUANTITY · FULL STACK · OEM NETWORK</div>
                 </div>
               </div>
@@ -1045,7 +988,7 @@ function ReportView({projectInfo,serverConfigs,infraSelections,grandTotal,server
             {["Prices are indicative in USD; confirmed upon Purchase Order issuance.","Lead time: 4–10 weeks based on model and component availability.","OEM warranty applies as specified; extended support per selected option.","Payment: 30% advance, 60% on delivery, 10% on acceptance.","BOQ validity: 30 days from date of issue.","OEM network recommendations are best-practice guidance; final selection subject to site survey."].map((t,i)=>(<div key={i} style={{fontSize:10,color:"#3b82f6",marginBottom:3,display:"flex",gap:6}}><span>•</span>{t}</div>))}
           </div>
           <div style={{marginTop:28,paddingTop:16,borderTop:"2px solid #e0e7ff",display:"flex",justifyContent:"space-between",alignItems:"flex-end"}}>
-            <div style={{fontSize:10,color:"#93c5fd",fontFamily:"'JetBrains Mono',monospace"}}><div>DC-BOQ Pro v9 · {refNo}</div><div>{today}</div></div>
+            <div style={{fontSize:10,color:"#93c5fd",fontFamily:"'JetBrains Mono',monospace"}}><div>Sniper Presales v9 · {refNo}</div><div>{today}</div></div>
             <div style={{textAlign:"center"}}><div style={{borderTop:"2px solid #1e40af",width:220,paddingTop:6,fontSize:10,color:"#7aa3c0"}}>Authorized Signature & Stamp</div></div>
           </div>
         </div>
@@ -1064,58 +1007,67 @@ function AIScreen({onBack,onResult}){
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState("");
   const chips=[{label:"Retail",v:"Retail"},{label:"Healthcare",v:"Healthcare"},{label:"BFSI",v:"BFSI / Banking"},{label:"Education",v:"Education"},{label:"Manufacturing",v:"Manufacturing"},{label:"HPC / AI",v:"Research / HPC / AI"},{label:"Gaming",v:"Gaming"},{label:"Transport",v:"Transport"},{label:"SMB",v:"SMB"},{label:"Design / VFX",v:"Design / VFX"}];
-  const inp={width:"100%",background:"#fff",border:"1.5px solid #bfdbfe",borderRadius:7,padding:"8px 12px",color:"#1e3a5f",fontSize:12,fontFamily:"inherit"};
   const generate=async()=>{
     if(!req.trim()){setError("Please describe your requirements.");return;}
     setError("");setLoading(true);
-    const prompt=`You are a senior datacentre architect. Generate a detailed BOQ in strict JSON only — no markdown, no fences.\n\nREQUIREMENTS:\n${req}\n\nScale: ${scale}, Budget: ${budget}, Compliance: ${compliance}, Redundancy: ${redundancy}${chip?", Segment: "+chip:""}\n\n{"summary":"2-3 sentence overview","segment":"segment name","compute":[{"item":"name","spec":"brief spec","qty":1,"unitPrice":5000,"reason":"why for this customer"}],"storage":[...],"network":[...],"backup":[...],"monitoring":[...],"database":[...]}\n\nRules: realistic USD prices, 3-6 items per category, scale to needs, respect compliance.`;
     try{
-      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1500,messages:[{role:"user",content:prompt}]})});
+      const res=await fetch("/api/generate-boq",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({requirements:req,scale,budget,compliance,redundancy,segment:chip||undefined}),
+      });
       const data=await res.json();
-      const raw=data.content?.find(b=>b.type==="text")?.text||"";
-      const boq=JSON.parse(raw.replace(/```json|```/g,"").trim());
-      onResult(boq);
-    }catch(e){setError("Failed to generate BOQ. Please try again.");}
+      if(!res.ok) throw new Error(data.error||"Failed to generate BOQ");
+      onResult(data.boq);
+    }catch(e){setError(e.message||"Failed to generate BOQ. Please try again.");}
     setLoading(false);
   };
   return(
-    <div style={{fontFamily:"'Outfit',sans-serif",background:"linear-gradient(160deg,#e8f2fb,#f0f7ff)",minHeight:"100vh",color:"#1e3a5f"}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');*{box-sizing:border-box;margin:0;padding:0}@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      <header style={{background:"#fff",borderBottom:"1px solid #bfdbfe",padding:"0 1.5rem",height:56,display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,zIndex:200,boxShadow:"0 1px 8px #1e40af10"}}>
-        <button onClick={onBack} style={{padding:"6px 14px",borderRadius:6,border:"1px solid #bfdbfe",background:"transparent",color:"#1e40af",cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:600}}>← Back</button>
-        <div style={{width:30,height:30,background:"linear-gradient(135deg,#a855f7,#6366f1)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>🤖</div>
-        <span style={{fontWeight:700,fontSize:14,color:"#0c1f3d"}}>DC-BOQ Pro</span>
-        <span style={{background:"#a855f715",border:"1px solid #a855f740",borderRadius:5,padding:"3px 10px",fontSize:10,color:"#a855f7",fontWeight:700}}>AI Requirements Engine</span>
-      </header>
-      <div style={{maxWidth:900,margin:"0 auto",padding:"2.5rem 1.5rem"}}>
-        <div style={{marginBottom:32,textAlign:"center"}}>
-          <h1 style={{fontWeight:800,fontSize:28,color:"#0c1f3d",marginBottom:10,letterSpacing:-0.5}}>Describe Your Infrastructure Needs</h1>
-          <p style={{color:"#5a85a8",fontSize:13,lineHeight:1.9,maxWidth:560,margin:"0 auto"}}>AI will analyse your requirements and generate a complete BOQ covering Compute, Storage, Network, Backup, Monitoring & Database.</p>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1.5rem"}}>
-          <div style={{display:"flex",flexDirection:"column",gap:16}}>
-            <div>
-              <label style={{fontSize:10,color:"#7aa3c0",display:"block",marginBottom:6,textTransform:"uppercase",letterSpacing:1.5,fontWeight:700}}>Your Requirements *</label>
-              <textarea value={req} onChange={e=>setReq(e.target.value)} rows={10} placeholder={"Describe your infrastructure in detail...\n\nExample: We are a 500-bed hospital running Epic EHR and PACS imaging with 200TB of patient data. We need HA storage, HIPAA-compliant backup, and 24x7 uptime with DR capability."} style={{...inp,resize:"vertical",lineHeight:1.7,minHeight:190,fontSize:12}}/>
-            </div>
-            <div>
-              <label style={{fontSize:10,color:"#7aa3c0",display:"block",marginBottom:8,textTransform:"uppercase",letterSpacing:1.5,fontWeight:700}}>Quick Segment</label>
-              <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
-                {chips.map(c=>(<button key={c.v} onClick={()=>setChip(chip===c.v?"":c.v)} style={{padding:"5px 12px",borderRadius:20,border:`1.5px solid ${chip===c.v?"#a855f7":"#bfdbfe"}`,background:chip===c.v?"#a855f715":"#fff",color:chip===c.v?"#a855f7":"#4b7fa6",cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:chip===c.v?700:400,transition:"all 0.12s"}}>{c.label}</button>))}
-              </div>
-            </div>
+    <div className="boq-app boq-page-gradient">
+      <header className="boq-header">
+        <div className="boq-header-left">
+          <button type="button" onClick={onBack} className="boq-btn boq-btn-ghost">← Back</button>
+          <div className="boq-mark" aria-hidden>AI</div>
+          <div>
+            <div className="boq-brand-title">AI Requirements Engine</div>
+            <div className="boq-brand-sub">Powered by Groq</div>
           </div>
-          <div style={{display:"flex",flexDirection:"column",gap:14}}>
-            {[["Scale",scale,setScale,["Small (up to 50 users)","Medium (50-500 users)","Large (500-2000 users)","Enterprise (2000+ users)"]],["Budget Range (USD)",budget,setBudget,["Under $100K","$100K - $500K","$500K - $2M","$2M+"]],["Compliance",compliance,setCompliance,["None specific","HIPAA","PCI-DSS","RBI / SEBI","ISO 27001","GDPR"]],["Redundancy",redundancy,setRedundancy,["N (basic)","N+1 (standard HA)","2N (full redundancy)","2N+1 (mission critical)"]]].map(([lbl,val,setter,opts])=>(
-              <div key={lbl}>
-                <label style={{fontSize:10,color:"#7aa3c0",display:"block",marginBottom:5,textTransform:"uppercase",letterSpacing:1.5,fontWeight:700}}>{lbl}</label>
-                <select value={val} onChange={e=>setter(e.target.value)} style={inp}>{opts.map(o=><option key={o} value={o}>{o}</option>)}</select>
+          <span className="boq-badge boq-badge-ai">BOQ Generator</span>
+        </div>
+      </header>
+      <div className="boq-ai-container">
+        <div className="boq-hero" style={{marginBottom:"2rem"}}>
+          <h1 className="boq-page-title">Describe Your Infrastructure Needs</h1>
+          <p className="boq-page-lead">Describe your requirements and get a complete BOQ covering compute, storage, network, backup, monitoring, and database.</p>
+        </div>
+        <div className="boq-form-card">
+          <div className="boq-form-body">
+            <div className="boq-form-grid">
+              <div className="boq-form-section">
+                <div className="boq-form-field">
+                  <label className="boq-label boq-label-required" htmlFor="ai-req">Your Requirements</label>
+                  <textarea id="ai-req" className="boq-textarea" rows={10} value={req} onChange={e=>setReq(e.target.value)} placeholder={"Describe your infrastructure in detail...\n\nExample: We are a 500-bed hospital running Epic EHR and PACS imaging with 200TB of patient data. We need HA storage, HIPAA-compliant backup, and 24x7 uptime with DR capability."}/>
+                </div>
+                <div className="boq-form-field">
+                  <span className="boq-label">Quick Segment</span>
+                  <div className="boq-chips">
+                    {chips.map(c=>(<button key={c.v} type="button" onClick={()=>setChip(chip===c.v?"":c.v)} className={`boq-chip${chip===c.v?" boq-chip-active":""}`}>{c.label}</button>))}
+                  </div>
+                </div>
               </div>
-            ))}
-            {error&&<div style={{padding:"10px 14px",background:"#fff1f2",border:"1.5px solid #fecdd3",borderRadius:7,fontSize:12,color:"#be123c",fontWeight:500}}>{error}</div>}
-            <button onClick={generate} disabled={loading} style={{padding:"13px",borderRadius:8,border:"none",background:loading?"#bfdbfe":"linear-gradient(135deg,#a855f7,#6366f1)",color:"#fff",cursor:loading?"not-allowed":"pointer",fontWeight:700,fontSize:13,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginTop:"auto",boxShadow:loading?"none":"0 4px 16px #a855f730"}}>
-              {loading?<><span style={{width:15,height:15,border:"2px solid rgba(255,255,255,0.4)",borderTop:"2px solid #fff",borderRadius:"50%",display:"inline-block",animation:"spin 0.8s linear infinite"}}/>Generating your BOQ...</>:"🤖 Generate AI BOQ"}
-            </button>
+              <div className="boq-form-section boq-form-section-accent">
+                {[["Scale",scale,setScale,["Small (up to 50 users)","Medium (50-500 users)","Large (500-2000 users)","Enterprise (2000+ users)"]],["Budget Range (USD)",budget,setBudget,["Under $100K","$100K - $500K","$500K - $2M","$2M+"]],["Compliance",compliance,setCompliance,["None specific","HIPAA","PCI-DSS","RBI / SEBI","ISO 27001","GDPR"]],["Redundancy",redundancy,setRedundancy,["N (basic)","N+1 (standard HA)","2N (full redundancy)","2N+1 (mission critical)"]]].map(([lbl,val,setter,opts])=>(
+                  <div key={lbl} className="boq-form-field">
+                    <label className="boq-label" htmlFor={`ai-${lbl}`}>{lbl}</label>
+                    <select id={`ai-${lbl}`} className="boq-select" value={val} onChange={e=>setter(e.target.value)}>{opts.map(o=><option key={o} value={o}>{o}</option>)}</select>
+                  </div>
+                ))}
+                {error&&<div className="boq-alert boq-alert-error" role="alert">{error}</div>}
+                <button type="button" onClick={generate} disabled={loading} className="boq-btn boq-btn-ai boq-btn-lg" style={{marginTop:"0.5rem"}}>
+                  {loading?<><span className="boq-spinner"/>Generating your BOQ...</>:"🤖 Generate AI BOQ"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1171,5 +1123,35 @@ function AIResultPanel({result,fmt,onRerun}){
         </div>
       </div>
     </div>
+  );
+}
+
+function SegmentRoute(){
+  const navigate=useNavigate();
+  return <SegmentScreen onSelect={(key)=>navigate(`/segments/${key}/servers`)} onAI={()=>navigate("/ai")}/>;
+}
+
+function SegmentRedirect(){
+  const { segmentId }=useParams();
+  return <Navigate to={`/segments/${segmentId}/servers`} replace />;
+}
+
+function AIRoute(){
+  const navigate=useNavigate();
+  return <AIScreen onBack={()=>navigate("/")} onResult={(res)=>{sessionStorage.setItem("aiBoqResult",JSON.stringify(res));navigate("/segments/retail/ai-result");}}/>;
+}
+
+export default function App(){
+  return(
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/segments" element={<SegmentRoute />} />
+      <Route path="/segments/:segmentId" element={<SegmentRedirect />} />
+      <Route path="/segments/:segmentId/report" element={<Configurator />} />
+      <Route path="/segments/:segmentId/:tab" element={<Configurator />} />
+      <Route path="/ai" element={<AIRoute />} />
+      <Route path="/products/:category/:productId" element={<ProductPage />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
