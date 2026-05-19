@@ -9,7 +9,13 @@ export default function HomePage() {
     <div className="boq-app boq-shell">
       <header className="boq-masthead">
         <div className="boq-header-left">
-          <div className="boq-mark" aria-hidden>SN</div>
+          <div className="boq-mark">
+  <img
+    src="/logo.png"
+    alt="Sniper Presales Logo"
+    className="boq-logo"
+  />
+</div>
           <div>
             <div className="boq-brand-title">Sniper Presales</div>
             <div className="boq-brand-sub">Bill of Quantity · Rev 9</div>

@@ -404,7 +404,17 @@ function Configurator(){
     <div className="boq-app">
       <header className="boq-header">
         <div className="boq-header-left">
-          <div className="boq-mark" aria-hidden>SN</div>
+         <div className="boq-mark">
+  <img
+    src="/logo.png"
+    alt="Sniper Presales Logo"
+    style={{
+      width: "90px",
+      height: "40px",
+      objectFit: "contain"
+    }}
+  />
+</div>
           <div>
             <div className="boq-brand-title">Sniper Presales</div>
             <div className="boq-brand-sub">BOQ Configurator · v9</div>
@@ -567,9 +577,9 @@ function SegmentScreen({onSelect,onAI}){
       <Link to="/" className="boq-btn boq-btn-ghost boq-back-link">← Home</Link>
       <div className="boq-segment-hero">
         <div className="boq-segment-brand">
-          <div className="boq-mark boq-logo-lg" aria-hidden>SN</div>
+          <div className="boq-mark boq-logo-lg" aria-hidden></div>
           <div>
-            <div className="boq-page-title" style={{fontSize:"1.5rem",marginBottom:0}}>Sniper Presales</div>
+            <div className="boq-page-title" style={{fontSize:"2.5rem",marginBottom:0}}>Sniper Presales</div>
             <div className="boq-brand-sub">Segment index</div>
           </div>
         </div>
