@@ -1012,7 +1012,7 @@ function AIScreen({onBack,onResult}){
     if(!req.trim()){setError("Please describe your requirements.");return;}
     setError("");setLoading(true);
     try{
-      const res=await fetch("https://boq-production.up.railway.app/api/generate-boq",{
+      const res=await fetch("https://boq-01.vercel.app/api/generate-boq",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({requirements:req,scale,budget,compliance,redundancy,segment:chip||undefined}),
