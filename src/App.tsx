@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, useNavigate, useParams, Navigate, Link } from "react-router-dom";
 import { SEGMENTS } from "./data/segments";
-import { INFRA_CATALOGUE, BRAND_COLORS, BRAND_LABELS, fmt } from "./data/catalogue";
+import { INFRA_CATALOGUE, INFRA_CATEGORY_ORDER, infraCatalogueEntries, BRAND_COLORS, BRAND_LABELS, fmt } from "./data/catalogue";
 import HomePage from "./pages/HomePage";
 import ProductPage from "./pages/ProductPage";
 import { downloadBoqPdf, type BoqPdfPayload } from "./utils/boqPdf";
@@ -308,9 +308,10 @@ function buildBoqReportData({projectInfo,serverConfigs,infraSelections,grandTota
     return{category:brand?.label||"Server",color:brand?.color||"#1e40af",icon:"🖥️",name:model?.name||"-",spec,unitPrice:up,qty:cfg.qty,total:up*cfg.qty};
   });
   const infraLines=[];
-  Object.entries(infraSelections).forEach(([layer,items])=>{
+  INFRA_CATEGORY_ORDER.forEach((layer)=>{
+    const items=infraSelections[layer];
+    if(!items)return;
     const cat=INFRA_CATALOGUE[layer];
-    if(!cat)return;
     Object.entries(items).forEach(([id,qty])=>{if(qty>0){const item=cat.items.find(i=>i.id===id);if(item)infraLines.push({category:cat.label,color:cat.color,icon:cat.icon,name:item.name,spec:item.spec,unitPrice:item.unitPrice,qty,total:item.unitPrice*qty});}});
   });
   const allLines=[...serverLines,...infraLines];
@@ -345,7 +346,7 @@ function Configurator(){
   const [aiBoqResult,setAiBoqResult]=useState(null);
 
   const activeTab = tab === "report" ? "servers" : (tab || "servers");
-  const validTabs = ["servers", ...Object.keys(INFRA_CATALOGUE), "ai-result"];
+  const validTabs = ["servers", ...INFRA_CATEGORY_ORDER, "ai-result"];
 
   useEffect(()=>{
     if(!segmentId || !SEGMENTS[segmentId]) return;
@@ -397,7 +398,7 @@ function Configurator(){
     return <ReportView report={report} projectInfo={projectInfo} serverConfigs={serverConfigs} infraSelections={infraSelections} grandTotal={grandTotal} serverTotal={serverTotal} infraTotal={infraTotal} seg={seg} rec={rec} fmt={fmt} onBack={()=>navigate(`/segments/${segmentId}/servers`)}/>;
   }
 
-  const TABS=[{key:"servers",label:"Servers",icon:"🖥️"},...Object.entries(INFRA_CATALOGUE).map(([k,v])=>({key:k,label:v.label,icon:v.icon})),{key:"ai-result",label:"AI BOQ",icon:"🤖"}];
+  const TABS=[{key:"servers",label:"Servers",icon:"🖥️"},...infraCatalogueEntries().map(([k,v])=>({key:k,label:v.label,icon:v.icon})),{key:"ai-result",label:"AI BOQ",icon:"🤖"}];
 
   return(
     <div className="boq-app">
@@ -948,7 +949,7 @@ function ReportView({report,projectInfo,serverConfigs,infraSelections,grandTotal
             <div style={{fontSize:10,color:"#7aa3c0"}}>🖥️ Servers</div>
             <div style={{fontSize:15,fontWeight:700,color:"#1e3a5f",fontFamily:"'JetBrains Mono',monospace"}}>{fmt(serverTotal)}</div>
           </div>
-          {Object.entries(INFRA_CATALOGUE).map(([k,cat])=>{
+          {infraCatalogueEntries().map(([k,cat])=>{
             const items=infraSelections[k];if(!items||!Object.keys(items).length)return null;
             const t=Object.entries(items).reduce((a,[id,q])=>a+(cat.items.find(i=>i.id===id)?.unitPrice||0)*q,0);
             return<div key={k} style={{padding:"10px 16px",background:"#fff",border:"1px solid #e0e7ff",borderTop:`3px solid ${cat.color}`,borderRadius:8,minWidth:100}}><div style={{fontSize:10,color:"#7aa3c0"}}>{cat.icon} {cat.label}</div><div style={{fontSize:15,fontWeight:700,color:"#1e3a5f",fontFamily:"'JetBrains Mono',monospace"}}>{fmt(t)}</div></div>;
@@ -1011,7 +1012,7 @@ function AIScreen({onBack,onResult}){
     if(!req.trim()){setError("Please describe your requirements.");return;}
     setError("");setLoading(true);
     try{
-      const res=await fetch("/api/generate-boq",{
+      const res=await fetch("https://boq-production.up.railway.app/api/generate-boq",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({requirements:req,scale,budget,compliance,redundancy,segment:chip||undefined}),

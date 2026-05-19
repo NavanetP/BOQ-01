@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { INFRA_CATALOGUE } from "../data/catalogue";
+import { INFRA_CATALOGUE, INFRA_CATEGORY_ORDER, infraCatalogueEntries } from "../data/catalogue";
 import { SEGMENTS } from "../data/segments";
 
 export default function HomePage() {
@@ -39,7 +39,7 @@ export default function HomePage() {
               DOC-ID: BOQ-PLATFORM
               <br />
               {segmentEntries.length} verticals ·{" "}
-              {Object.keys(INFRA_CATALOGUE).length} catalogue layers
+              {INFRA_CATEGORY_ORDER.length} catalogue layers
             </div>
           </aside>
 
@@ -68,7 +68,7 @@ export default function HomePage() {
               <span>02</span> Product catalogue
             </h2>
             <div className="boq-form-card" style={{ padding: "0.5rem 1rem" }}>
-              {Object.entries(INFRA_CATALOGUE).map(([key, cat]) => {
+              {infraCatalogueEntries().map(([key, cat]) => {
                 const first = cat.items[0];
                 return (
                   <Link

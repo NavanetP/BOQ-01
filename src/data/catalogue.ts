@@ -1,4 +1,17 @@
-export const INFRA_CATALOGUE = {
+/** Sidebar / BOQ layer order (Servers tab is separate, always first). */
+export const INFRA_CATEGORY_ORDER = [
+  "vmware",
+  "storage",
+  "rack",
+  "power",
+  "network",
+  "database",
+  "backup",
+  "licenses",
+  "monitoring",
+] as const;
+
+const INFRA_CATALOGUE_DATA = {
   network:{label:"Network",icon:"🔗",color:"#7c3aed",items:[
     {id:"net-cisco-c9300",  name:"Cisco Catalyst 9300 (Access)",      brand:"cisco",   spec:"48x1G/10G PoE+, 4x25G uplinks, DNA, L3",           unitPrice:9500},
     {id:"net-cisco-n9k-tor",name:"Cisco Nexus 9300 (ToR 25G)",         brand:"cisco",   spec:"48x25G SFP28 + 6x100G QSFP28, VXLAN, ACI-ready",   unitPrice:24000},
@@ -93,7 +106,7 @@ export const INFRA_CATALOGUE = {
     {id:"lic-antivirus",name:"Endpoint Protection Suite",spec:"CrowdStrike/Symantec, per node, 3yr",unitPrice:120},
     {id:"lic-citrix",name:"Citrix Virtual Apps & Desktops",spec:"Per-CCU Premium, 3yr SA",unitPrice:350},
   ]},
-  power:{label:"Power & Cooling",icon:"⚡",color:"#f59e0b",items:[
+  power:{label:"Power and Cooling",icon:"⚡",color:"#f59e0b",items:[
     {id:"pwr-ups-10k",name:"UPS 10kVA Modular",spec:"Online double-conversion, N+1 ready",unitPrice:8500},
     {id:"pwr-ups-80k",name:"UPS 80kVA 3-Phase",spec:"Online, scalable, SNMP managed",unitPrice:52000},
     {id:"pwr-pdu-basic",name:"Basic PDU",spec:"0U vertical, 32A, C13/C19 outlets",unitPrice:450},
@@ -101,7 +114,7 @@ export const INFRA_CATALOGUE = {
     {id:"pwr-crac",name:"CRAC Unit 50kW",spec:"Precision cooling, N+1 EC fans",unitPrice:28000},
     {id:"pwr-gen",name:"Diesel Generator 500kVA",spec:"Auto-transfer, 48hr fuel tank",unitPrice:85000},
   ]},
-  rack:{label:"Rack & Stack",icon:"🏗️",color:"#6b7280",items:[
+  rack:{label:"Rack and Stack",icon:"🏗️",color:"#6b7280",items:[
     {id:"rack-42u",name:"42U Server Rack",spec:"800x1000mm, 1200kg rated, blanking panels",unitPrice:1200},
     {id:"rack-48u",name:"48U Network Cabinet",spec:"600x800mm, vented, lockable",unitPrice:950},
     {id:"rack-cable-mgr",name:"Cable Management Kit",spec:"Horizontal+vertical per rack",unitPrice:320},
@@ -109,7 +122,14 @@ export const INFRA_CATALOGUE = {
     {id:"rack-install",name:"Rack Integration Services",spec:"Cabling, labeling, documentation",unitPrice:3500},
     {id:"rack-amc",name:"AMC / Support Contract 1yr",spec:"24x7 onsite, 4-hour SLA",unitPrice:18000},
   ]},
-};
+} as const;
+
+export const INFRA_CATALOGUE = Object.fromEntries(
+  INFRA_CATEGORY_ORDER.map((key) => [key, INFRA_CATALOGUE_DATA[key]])
+) as { [K in (typeof INFRA_CATEGORY_ORDER)[number]]: (typeof INFRA_CATALOGUE_DATA)[K] };
+
+export const infraCatalogueEntries = () =>
+  INFRA_CATEGORY_ORDER.map((key) => [key, INFRA_CATALOGUE[key]] as const);
 
 export const BRAND_COLORS: Record<string, string> = {cisco:"#1ba0d7",juniper:"#84ba27",aruba:"#f96c1b",fortinet:"#e7222e",f5:"#e5002b",paloalto:"#fa582d"};
 export const BRAND_LABELS: Record<string, string> = {cisco:"CISCO",juniper:"JUNIPER",aruba:"ARUBA",fortinet:"FORTINET",f5:"F5",paloalto:"PALO ALTO"};
@@ -127,7 +147,13 @@ export function findProduct(category: string, productId: string) {
 }
 
 export function getAllProducts() {
-  return Object.entries(INFRA_CATALOGUE).flatMap(([category, cat]) =>
-    cat.items.map(item => ({ category, categoryLabel: cat.label, categoryColor: cat.color, ...item }))
-  );
+  return INFRA_CATEGORY_ORDER.flatMap((category) => {
+    const cat = INFRA_CATALOGUE[category];
+    return cat.items.map((item) => ({
+      category,
+      categoryLabel: cat.label,
+      categoryColor: cat.color,
+      ...item,
+    }));
+  });
 }
