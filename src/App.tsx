@@ -1008,21 +1008,39 @@ function AIScreen({onBack,onResult}){
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState("");
   const chips=[{label:"Retail",v:"Retail"},{label:"Healthcare",v:"Healthcare"},{label:"BFSI",v:"BFSI / Banking"},{label:"Education",v:"Education"},{label:"Manufacturing",v:"Manufacturing"},{label:"HPC / AI",v:"Research / HPC / AI"},{label:"Gaming",v:"Gaming"},{label:"Transport",v:"Transport"},{label:"SMB",v:"SMB"},{label:"Design / VFX",v:"Design / VFX"}];
-  const generate=async()=>{
-    if(!req.trim()){setError("Please describe your requirements.");return;}
-    setError("");setLoading(true);
-    try{
-      const res=await fetch("https://boq-production.up.railway.app/api/generate-boq",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({requirements:req,scale,budget,compliance,redundancy,segment:chip||undefined}),
-      });
-      const data=await res.json();
-      if(!res.ok) throw new Error(data.error||"Failed to generate BOQ");
-      onResult(data.boq);
-    }catch(e){setError(e.message||"Failed to generate BOQ. Please try again.");}
-    setLoading(false);
-  };
+  const generate = async () => {
+  if (!req.trim()) { setError("Please describe your requirements."); return; }
+  setError(""); setLoading(true);
+  try {
+    const res = await fetch("https://boq-production.up.railway.app/api/generate-boq", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requirements: req, scale, budget, compliance, redundancy, segment: chip || undefined }),
+    });
+
+    // Check if response has content before parsing
+    const text = await res.text();
+    console.log("Raw response:", text);
+    console.log("Status:", res.status);
+
+    if (!text) {
+      throw new Error(`Server returned empty response (HTTP ${res.status}). Check Railway logs.`);
+    }
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error(`Invalid JSON from server: ${text.slice(0, 200)}`);
+    }
+
+    if (!res.ok) throw new Error(data.error || "Failed to generate BOQ");
+    onResult(data.boq);
+  } catch (e) {
+    setError(e.message || "Failed to generate BOQ. Please try again.");
+  }
+  setLoading(false);
+};
   return(
     <div className="boq-app boq-page-gradient">
       <header className="boq-header">
