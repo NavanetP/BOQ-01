@@ -1,32 +1,82 @@
 import { Link } from "react-router-dom";
 import { INFRA_CATALOGUE, INFRA_CATEGORY_ORDER, infraCatalogueEntries } from "../data/catalogue";
 import { SEGMENTS } from "../data/segments";
+import { GoogleLogin } from '@react-oauth/google';
+import { useAuth } from '../context/AuthContext';
 
 export default function HomePage() {
+  const { isAuthenticated, login, logout, user } = useAuth();
   const segmentEntries = Object.entries(SEGMENTS);
+
+  if (!isAuthenticated) {
+    return (
+      <div className="boq-app boq-shell boq-page-gradient" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="boq-form-card" style={{ maxWidth: '450px', width: '100%', padding: '2.5rem', textAlign: 'center' }}>
+          <div className="boq-mark" style={{ margin: '0 auto 1.5rem', width: '80px', height: '80px' }}>
+            <img src="/logo.png" alt="Sniper Presales Logo" className="boq-logo" />
+          </div>
+          <h1 className="boq-brand-title" style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Sniper Presales</h1>
+          <p className="boq-brand-sub" style={{ marginBottom: '2rem' }}>Sign in to access the BOQ Configuration Tool</p>
+
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <GoogleLogin
+              onSuccess={(credentialResponse) => {
+                if (credentialResponse.credential) {
+                  login(credentialResponse.credential);
+                }
+              }}
+              onError={() => {
+                console.log('Login Failed');
+              }}
+              useOneTap
+            />
+          </div>
+
+          <p className="boq-index-desc" style={{ marginTop: '2rem', fontSize: '0.85rem' }}>
+            Authorized personnel only. Please sign in with your corporate Gmail account.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="boq-app boq-shell">
       <header className="boq-masthead">
         <div className="boq-header-left">
           <div className="boq-mark">
-  <img
-    src="/logo.png"
-    alt="Sniper Presales Logo"
-    className="boq-logo"
-  />
-</div>
+            <img
+              src="/logo.png"
+              alt="Sniper Presales Logo"
+              className="boq-logo"
+            />
+          </div>
           <div>
             <div className="boq-brand-title">Sniper Presales</div>
             <div className="boq-brand-sub">Bill of Quantity · Rev 9</div>
           </div>
+        </div>
+        <div className="boq-header-right" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {user && (
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '12px', fontWeight: 'bold' }}>{user.name}</div>
+              <div style={{ fontSize: '10px', color: '#7aa3c0' }}>{user.email}</div>
+            </div>
+          )}
+          <button
+            onClick={logout}
+            className="boq-btn boq-btn-ghost boq-btn-sm"
+            style={{ fontSize: '11px' }}
+          >
+            Logout
+          </button>
         </div>
       </header>
 
       <main className="boq-home">
         <div className="boq-home-grid">
           <aside className="boq-home-intro">
-            <p className="boq-eyebrow">Data centre presales</p>
+            <p className="boq-eyebrow">Welcome back, {user?.name.split(' ')[0]}</p>
             <h1 className="boq-page-title">
               Configure infrastructure quotes with line-item precision.
             </h1>
@@ -39,7 +89,8 @@ export default function HomePage() {
                 Open segment index
               </Link>
               <Link to="/ai" className="boq-btn boq-btn-accent boq-btn-lg">
-                AI Requirements → BOQ              </Link>
+                AI Requirements → BOQ
+              </Link>
             </div>
             <div className="boq-home-meta">
               DOC-ID: BOQ-PLATFORM
