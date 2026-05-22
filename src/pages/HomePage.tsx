@@ -10,12 +10,12 @@ export default function HomePage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="boq-app boq-shell boq-page-gradient" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="boq-form-card" style={{ maxWidth: '450px', width: '100%', padding: '2.5rem', textAlign: 'center' }}>
-          <div className="boq-mark" style={{ margin: '0 auto 1.5rem', width: '80px', height: '80px' }}>
-            <img src="/logo.png" alt="Sniper Presales Logo" className="boq-logo" />
+      <div className="boq-app boq-auth-page">
+        <div className="boq-form-card boq-auth-card">
+          <div className="boq-auth-logo">
+            <img src="/logo.png" alt="Sniper Presales Logo" />
           </div>
-          <h1 className="boq-brand-title" style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Sniper Presales</h1>
+          <h1 className="boq-brand-title boq-auth-title">Sniper Presales</h1>
           <p className="boq-brand-sub" style={{ marginBottom: '2rem' }}>Sign in to access the BOQ Configuration Tool</p>
 
           <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -32,7 +32,7 @@ export default function HomePage() {
             />
           </div>
 
-          <p className="boq-index-desc" style={{ marginTop: '2rem', fontSize: '0.85rem' }}>
+          <p className="boq-auth-note">
             Authorized personnel only. Please sign in with your corporate Gmail account.
           </p>
         </div>
@@ -41,7 +41,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="boq-app boq-shell">
+    <div className="boq-app">
       <header className="boq-masthead">
         <div className="boq-header-left">
           <div className="boq-mark">
@@ -56,17 +56,16 @@ export default function HomePage() {
             <div className="boq-brand-sub">Bill of Quantity · Rev 9</div>
           </div>
         </div>
-        <div className="boq-header-right" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div className="boq-header-right">
           {user && (
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '12px', fontWeight: 'bold' }}>{user.name}</div>
-              <div style={{ fontSize: '10px', color: '#7aa3c0' }}>{user.email}</div>
+            <div className="boq-user-block">
+              <div className="boq-user-name">{user.name}</div>
+              <div className="boq-user-email">{user.email}</div>
             </div>
           )}
           <button
             onClick={logout}
             className="boq-btn boq-btn-ghost boq-btn-sm"
-            style={{ fontSize: '11px' }}
           >
             Logout
           </button>
@@ -89,7 +88,7 @@ export default function HomePage() {
                 Open segment index
               </Link>
               <Link to="/ai" className="boq-btn boq-btn-accent boq-btn-lg">
-                AI Requirements → BOQ
+                Requirements → BOQ
               </Link>
             </div>
             <div className="boq-home-meta">
@@ -110,9 +109,7 @@ export default function HomePage() {
                   <Link to={`/segments/${key}/servers`} className="boq-index-item">
                     <span className="boq-index-num">{String(i + 1).padStart(2, "0")}</span>
                     <span>
-                      <span className="boq-index-label">
-                        {seg.icon} {seg.label}
-                      </span>
+                      <span className="boq-index-label">{seg.label}</span>
                       <span className="boq-index-desc">{seg.description}</span>
                     </span>
                     <span className="boq-index-arrow">→</span>

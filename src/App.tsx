@@ -357,7 +357,7 @@ function buildBoqReportData({ projectInfo, serverConfigs, infraSelections, grand
 
 function BrandBadge({ brand }) {
   if (!brand) return null;
-  return <span style={{ borderRadius: 3, padding: "2px 7px", fontSize: 9, fontWeight: 700, background: BRAND_COLORS[brand] || "#7c3aed", color: "#fff", letterSpacing: 0.5, flexShrink: 0, whiteSpace: "nowrap" }}>{BRAND_LABELS[brand] || brand.toUpperCase()}</span>;
+  return <span className="boq-brand-badge" style={{ background: BRAND_COLORS[brand] || "var(--boq-accent)" }}>{BRAND_LABELS[brand] || brand.toUpperCase()}</span>;
 }
 
 function Configurator() {
@@ -422,22 +422,19 @@ function Configurator() {
     return <ReportView report={report} projectInfo={projectInfo} serverConfigs={serverConfigs} infraSelections={infraSelections} grandTotal={grandTotal} serverTotal={serverTotal} infraTotal={infraTotal} seg={seg} rec={rec} fmt={fmt} onBack={() => navigate(`/segments/${segmentId}/servers`)} />;
   }
 
-  const TABS = [{ key: "servers", label: "Servers", icon: "🖥️" }, ...infraCatalogueEntries().map(([k, v]) => ({ key: k, label: v.label, icon: v.icon })), { key: "ai-result", label: "AI BOQ", icon: "🤖" }];
+  const tabCode = (key: string) => {
+    if (key === "servers") return "SRV";
+    if (key === "ai-result") return "AI";
+    return key.slice(0, 3).toUpperCase();
+  };
+  const TABS = [{ key: "servers", label: "Servers" }, ...infraCatalogueEntries().map(([k, v]) => ({ key: k, label: v.label })), { key: "ai-result", label: "AI BOQ" }];
 
   return (
     <div className="boq-app">
       <header className="boq-header">
         <div className="boq-header-left">
           <div className="boq-mark">
-            <img
-              src="/logo.png"
-              alt="Sniper Presales Logo"
-              style={{
-                width: "90px",
-                height: "40px",
-                objectFit: "contain"
-              }}
-            />
+            <img src="/logo.png" alt="Sniper Presales Logo" className="boq-logo" />
           </div>
           <div>
             <div className="boq-brand-title">Sniper Presales</div>
@@ -485,8 +482,8 @@ function Configurator() {
               const isActive = (tab || "servers") === t.key;
               return (
                 <button key={t.key} type="button" onClick={() => navigate(`/segments/${segmentId}/${t.key}`)} className={`boq-nav-tab${isActive ? " boq-nav-tab-active" : ""}`} >
-                  <span>{t.icon}</span>
-                  <span style={{ flex: 1 }}>{t.label}</span>
+                  <span className="boq-nav-tab-code">{tabCode(t.key)}</span>
+                  <span className="boq-nav-tab-label">{t.label}</span>
                   {hasRec && <span className="boq-nav-dot" />}
                 </button>
               );
@@ -513,7 +510,7 @@ const HV_VENDORS = [
   { key: "oracle", label: "Oracle", color: "#f80000", icon: "☁️", ids: ["hv-oracle-vm", "hv-oracle-olvm", "hv-oracle-oci-hci"] },
   { key: "nutanix", label: "Nutanix", color: "#024da1", icon: "🟦", ids: ["hv-nutanix-aos", "hv-nutanix-prism", "hv-nutanix-nc2", "hv-nutanix-files"] },
   { key: "hpe", label: "HPE", color: "#01a982", icon: "🟢", ids: ["hv-hpe-morpheus", "hv-hpe-simplivity", "hv-hpe-synergy-cm"] },
-  { key: "opensource", label: "Open Source", color: "#f97316", icon: "🐧", ids: ["hv-proxmox", "hv-xcp-ng"] },
+  
 ];
 
 function HypervisorSelector({ infraSelections, updateInfraQty, rec, seg }) {
@@ -531,27 +528,27 @@ function HypervisorSelector({ infraSelections, updateInfraQty, rec, seg }) {
   const totalSelected = selectedIds.length;
 
   return (
-    <div style={{ background: "#fff", borderBottom: "2px solid #8b5cf620", padding: "14px 24px", boxShadow: "0 2px 12px #1e40af08" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: expanded ? 14 : 0, cursor: "pointer" }} onClick={() => setExpanded(e => !e)}>
-        <div style={{ width: 32, height: 32, background: "linear-gradient(135deg,#8b5cf6,#6366f1)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, flexShrink: 0 }}>⚙️</div>
+    <div className="boq-hypervisor-selector">
+      <div className="boq-hv-header" onClick={() => setExpanded(e => !e)}>
+        <div className="boq-hv-icon">HV</div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 700, fontSize: 13, color: "#0f2644", lineHeight: 1 }}>Hypervisor / Virtualisation Stack</div>
-          <div style={{ fontSize: 10, color: "#7aa3c0", marginTop: 2 }}>
+          <div className="boq-hv-title">Hypervisor / Virtualisation Stack</div>
+          <div className="boq-hv-sub">
             {totalSelected > 0
-              ? <span>{totalSelected} selected — <span style={{ color: "#8b5cf6", fontWeight: 600 }}>{selectedIds.map(id => hvItems.find(i => i.id === id)?.name.split(" ").slice(0, 2).join(" ")).join(", ")}</span></span>
-              : "Click to select hypervisors for this project"
+              ? <span>{totalSelected} selected — <span className="boq-text-accent">{selectedIds.map(id => hvItems.find(i => i.id === id)?.name.split(" ").slice(0, 2).join(" ")).join(", ")}</span></span>
+              : "Expand to select hypervisors for this project"
             }
           </div>
         </div>
-        {totalSelected > 0 && <span style={{ background: "#8b5cf620", border: "1px solid #8b5cf640", borderRadius: 20, padding: "3px 10px", fontSize: 10, color: "#8b5cf6", fontWeight: 700 }}>{totalSelected} selected</span>}
-        <span style={{ fontSize: 16, color: "#8b5cf6", transform: expanded ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>▾</span>
+        {totalSelected > 0 && <span className="boq-pill-accent">{totalSelected} selected</span>}
+        <span className={`boq-hv-chevron${expanded ? " boq-hv-chevron-open" : ""}`}>▾</span>
       </div>
       {expanded && (
         <div>
           {recIds.length > 0 && (
-            <div style={{ marginBottom: 12, padding: "8px 12px", background: "#8b5cf608", border: "1px solid #8b5cf630", borderRadius: 8, fontSize: 10, color: "#7aa3c0" }}>
-              <span style={{ color: "#8b5cf6", fontWeight: 700 }}>★ Recommended for {seg?.label}:</span>{" "}
-              {recIds.map(id => { const it = hvItems.find(i => i.id === id); return it ? <button key={id} onClick={() => { if (!((infraSelections.vmware || {})[id] > 0)) updateInfraQty("vmware", id, 1); }} style={{ marginLeft: 6, padding: "2px 8px", borderRadius: 4, border: `1px solid #8b5cf650`, background: (infraSelections.vmware || {})[id] > 0 ? "#8b5cf620" : "transparent", color: "#8b5cf6", cursor: "pointer", fontSize: 10, fontWeight: 600, fontFamily: "inherit" }}>{it.name.split(" ").slice(0, 3).join(" ")}</button> : null; })}
+            <div className="boq-hv-recommendations">
+              <span className="boq-text-accent">Recommended for {seg?.label}:</span>{" "}
+              {recIds.map(id => { const it = hvItems.find(i => i.id === id); const active = (infraSelections.vmware || {})[id] > 0; return it ? <button key={id} type="button" onClick={() => { if (!active) updateInfraQty("vmware", id, 1); }} className={`boq-hv-rec-btn${active ? " boq-hv-rec-btn-active" : ""}`}>{it.name.split(" ").slice(0, 3).join(" ")}</button> : null; })}
             </div>
           )}
           {HV_VENDORS.map(vendor => {
@@ -559,24 +556,23 @@ function HypervisorSelector({ infraSelections, updateInfraQty, rec, seg }) {
             if (!vendorItems.length) return null;
             const vendorSelected = vendorItems.filter(i => (infraSelections.vmware || {})[i.id] > 0).length;
             return (
-              <div key={vendor.key} style={{ marginBottom: 10 }}>
-                <div style={{ fontSize: 9, fontWeight: 700, color: vendor.color, letterSpacing: 1, textTransform: "uppercase", marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
-                  <span>{vendor.icon}</span>{vendor.label}
-                  {vendorSelected > 0 && <span style={{ background: `${vendor.color}20`, border: `1px solid ${vendor.color}40`, borderRadius: 10, padding: "1px 7px", fontSize: 9, color: vendor.color }}>{vendorSelected}/{vendorItems.length}</span>}
+              <div key={vendor.key} className="boq-hv-vendor-group">
+                <div className="boq-hv-vendor-label" style={{ color: vendor.color }}>
+                  {vendor.label}
+                  {vendorSelected > 0 && <span className="boq-pill-accent">{vendorSelected}/{vendorItems.length}</span>}
                 </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                <div className="boq-hv-chip-grid">
                   {vendorItems.map(item => {
                     const isSelected = (infraSelections.vmware || {})[item.id] > 0;
-                    const isRec = recIds.includes(item.id);
                     return (
-                      <button key={item.id} onClick={() => toggleHv(item.id)}
-                        style={{ padding: "7px 12px", borderRadius: 8, border: `2px solid ${isSelected ? vendor.color : isRec ? vendor.color + "60" : "#e0e7ff"}`, background: isSelected ? `${vendor.color}15` : "#fff", color: isSelected ? vendor.color : "#4b7fa6", cursor: "pointer", fontSize: 11, fontFamily: "inherit", fontWeight: isSelected ? 700 : 400, transition: "all 0.12s", display: "flex", alignItems: "center", gap: 6, boxShadow: isSelected ? `0 2px 8px ${vendor.color}25` : "none", position: "relative" }}>
-                        {isRec && !isSelected && <span style={{ position: "absolute", top: -4, right: -4, width: 8, height: 8, borderRadius: "50%", background: seg?.color || "#8b5cf6", border: "1px solid #fff" }} />}
-                        {isSelected && <span style={{ fontSize: 12 }}>✓</span>}
-                        <div style={{ textAlign: "left" }}>
+                      <button key={item.id} type="button" onClick={() => toggleHv(item.id)}
+                        className={`boq-hv-chip${isSelected ? " boq-hv-chip-selected" : ""}`}
+                        style={isSelected ? { borderColor: vendor.color } : undefined}>
+                        {isSelected && <span>✓</span>}
+                        <span>
                           <div style={{ lineHeight: 1.2 }}>{item.name}</div>
-                          <div style={{ fontSize: 9, color: isSelected ? vendor.color + "aa" : "#93c5fd", fontFamily: "'JetBrains Mono',monospace" }}>{item.unitPrice === 0 ? "Free" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(item.unitPrice)}</div>
-                        </div>
+                          <div className="boq-hv-chip-price">{item.unitPrice === 0 ? "Free" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(item.unitPrice)}</div>
+                        </span>
                       </button>
                     );
                   })}
@@ -584,9 +580,9 @@ function HypervisorSelector({ infraSelections, updateInfraQty, rec, seg }) {
               </div>
             );
           })}
-          <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #e0e7ff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 10, color: "#7aa3c0" }}>{hvItems.length} total hypervisor products available</span>
-            <button onClick={() => setExpanded(false)} style={{ padding: "5px 14px", borderRadius: 5, border: "1px solid #bfdbfe", background: "#f0f7ff", color: "#1e40af", cursor: "pointer", fontSize: 11, fontFamily: "inherit", fontWeight: 600 }}>Done ✓</button>
+          <div className="boq-hv-footer">
+            <span style={{ fontSize: "0.6875rem", color: "var(--boq-ink-muted)" }}>{hvItems.length} hypervisor products</span>
+            <button type="button" onClick={() => setExpanded(false)} className="boq-btn boq-btn-ghost boq-btn-sm">Done</button>
           </div>
         </div>
       )}
@@ -597,35 +593,29 @@ function HypervisorSelector({ infraSelections, updateInfraQty, rec, seg }) {
 function SegmentScreen({ onSelect, onAI }) {
   const [hov, setHov] = useState(null);
   return (
-    <div className="boq-app boq-page-gradient boq-segment-page">
+    <div className="boq-app boq-segment-page">
       <Link to="/" className="boq-btn boq-btn-ghost boq-back-link">← Home</Link>
       <div className="boq-segment-hero">
-        <div className="boq-segment-brand">
-          <div className="boq-mark boq-logo-lg" aria-hidden></div>
-          <div>
-            <div className="boq-page-title" style={{ fontSize: "2.5rem", marginBottom: 0 }}>Sniper Presales</div>
-            <div className="boq-brand-sub">Segment index</div>
-          </div>
-        </div>
-        <h1 className="boq-page-title">Select Your Industry Vertical</h1>
-        <p className="boq-page-lead">Choose a segment for a pre-configured full-stack — servers, OEM network, storage, hypervisor, monitoring and more — or let AI build it from your requirements.</p>
-        <button type="button" onClick={onAI} className="boq-btn boq-btn-accent boq-btn-lg" style={{ width: "auto", maxWidth: 320, marginTop: "1rem" }}>
+        <p className="boq-eyebrow">Segment index</p>
+        <h1 className="boq-page-title">Select industry vertical</h1>
+        <p className="boq-page-lead">Choose a segment for a pre-configured full-stack—servers, network, storage, hypervisor, monitoring—or draft a bill from written requirements.</p>
+        <button type="button" onClick={onAI} className="boq-btn boq-btn-accent" style={{ marginTop: "1rem", maxWidth: 280 }}>
           Draft from requirements
         </button>
       </div>
       <div className="boq-segment-grid">
-        {Object.entries(SEGMENTS).map(([key, seg]) => {
+        {Object.entries(SEGMENTS).map(([key, seg], i) => {
           const rc = Object.values(SEGMENT_RECOMMENDATIONS[key]).reduce((a, v) => typeof v === "object" && v.items ? a + v.items.length : a, 0);
           const active = hov === key;
           return (
             <button key={key} type="button" onClick={() => onSelect(key)} onMouseEnter={() => setHov(key)} onMouseLeave={() => setHov(null)}
               className={`boq-segment-card${active ? " boq-segment-card-active" : ""}`}>
-              <span className="boq-seg-icon">{seg.icon}</span>
+              <span className="boq-seg-code">{String(i + 1).padStart(2, "0")}</span>
               <span>
                 <span className="boq-index-label">{seg.label}</span>
                 <span className="boq-index-desc">{seg.description}</span>
               </span>
-              <span className="boq-index-meta">~{rc} · →</span>
+              <span className="boq-index-meta">{rc} items →</span>
             </button>
           );
         })}
@@ -641,16 +631,13 @@ function ServerPanel({ configs, updateConfig, addConfig, removeConfig, seg, rec,
   return (
     <div>
       {seg && rec && (
-        <div style={{ background: `linear-gradient(135deg,${seg.color}12,#f0f7ff)`, border: `1.5px solid ${seg.color}35`, borderRadius: 12, padding: "14px 18px", marginBottom: 18 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-            <span style={{ fontSize: 20 }}>{seg.icon}</span>
-            <span style={{ fontWeight: 700, fontSize: 14, color: "#0f2644" }}>{seg.label} — Recommended Server</span>
-          </div>
-          <div style={{ fontSize: 11, color: "#5a85a8", lineHeight: 1.7 }}>💡 {rec.servers.reason}</div>
+        <div className="boq-callout" style={{ marginBottom: "1.125rem" }}>
+          <div className="boq-callout-title">{seg.label} — recommended server</div>
+          <div style={{ fontSize: "0.8125rem", color: "var(--boq-ink-soft)", lineHeight: 1.65 }}>{rec.servers.reason}</div>
         </div>
       )}
       <div className="boq-panel-toolbar">
-        <h2 className="boq-panel-title">🖥️ Server Configuration</h2>
+        <h2 className="boq-panel-title">Server configuration</h2>
         <button type="button" onClick={addConfig} className="boq-btn boq-btn-ghost">+ Add Server Row</button>
       </div>
       {configs.map((cfg, idx) => {
@@ -659,27 +646,27 @@ function ServerPanel({ configs, updateConfig, addConfig, removeConfig, seg, rec,
         const model = seriesData?.models.find(m => m.id === cfg.modelId);
         const cpuList = cfg.cpuType === "amd" ? CPU_OPTIONS.amd : CPU_OPTIONS.intel;
         const unitPrice = computeServerPrice({ ...cfg, qty: 1 });
-        const tierColor = { "Entry": "#7aa3c0", "Mid-range": "#06b6d4", "High-end": "#8b5cf6", "Mission Critical": "#ef4444" }[model?.tier] || "#7aa3c0";
+        const tierColor = { "Entry": "var(--boq-ink-muted)", "Mid-range": "var(--boq-teal)", "High-end": "var(--boq-accent)", "Mission Critical": "var(--boq-danger)" }[model?.tier] || "var(--boq-ink-muted)";
         return (
-          <div key={idx} style={{ background: "#fff", border: `1.5px solid ${brand.color}30`, borderRadius: 12, marginBottom: 14, overflow: "hidden", boxShadow: "0 2px 8px #1e40af08" }}>
-            <div style={{ background: `linear-gradient(90deg,${brand.color}12,#f0f7ff)`, borderBottom: `1px solid ${brand.color}20`, padding: "12px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div key={idx} className="boq-server-card" style={{ borderLeft: `3px solid ${brand.color}` }}>
+            <div className="boq-server-card-header">
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ background: `${brand.color}20`, border: `1.5px solid ${brand.color}40`, borderRadius: 5, padding: "3px 10px", fontWeight: 700, fontSize: 11, color: brand.color, fontFamily: "'JetBrains Mono',monospace" }}>{brand.logo}</span>
+                <span className="boq-brand-badge" style={{ background: brand.color }}>{brand.logo}</span>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: 13, color: "#0f2644" }}>{model?.name || "Select Model"}</div>
-                  <div style={{ fontSize: 10, color: "#7aa3c0" }}>Server {idx + 1} · {model?.formFactor || "—"} · <span style={{ color: tierColor, fontWeight: 600 }}>{model?.tier}</span></div>
+                  <div style={{ fontWeight: 700, fontSize: "0.8125rem", color: "var(--boq-ink)" }}>{model?.name || "Select Model"}</div>
+                  <div style={{ fontSize: "0.6875rem", color: "var(--boq-ink-muted)" }}>Server {idx + 1} · {model?.formFactor || "—"} · <span style={{ color: tierColor, fontWeight: 600 }}>{model?.tier}</span></div>
                 </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: "#0f2644", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(unitPrice * cfg.qty)}</div>
-                  <div style={{ fontSize: 9, color: "#7aa3c0" }}>{cfg.qty}x @ {fmt(unitPrice)}</div>
+                  <div style={{ fontSize: "0.9375rem", fontWeight: 700, color: "var(--boq-ink)", fontFamily: "var(--boq-mono)" }}>{fmt(unitPrice * cfg.qty)}</div>
+                  <div style={{ fontSize: "0.5625rem", color: "var(--boq-ink-muted)" }}>{cfg.qty}x @ {fmt(unitPrice)}</div>
                 </div>
-                {configs.length > 1 && <button onClick={() => removeConfig(idx)} style={{ background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: 5, width: 26, height: 26, color: "#ef4444", cursor: "pointer", fontSize: 14, fontWeight: 700 }}>×</button>}
+                {configs.length > 1 && <button type="button" onClick={() => removeConfig(idx)} className="boq-remove-btn" aria-label="Remove server">×</button>}
               </div>
             </div>
-            <div style={{ padding: "14px 18px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 10 }}>
+            <div className="boq-server-card-body">
+              <div className="boq-server-grid">
                 <F label="Brand"><div style={{ display: "flex", gap: 5 }}>{Object.entries(SERVER_BRANDS).map(([k, b]) => <TB key={k} active={cfg.brand === k} color={b.color} onClick={() => updateConfig(idx, "brand", k)}>{b.logo}</TB>)}</div></F>
                 <F label="Series"><Sel value={cfg.series} onChange={v => updateConfig(idx, "series", v)}>{Object.keys(brand.series).map(s => <option key={s} value={s}>{s}</option>)}</Sel></F>
                 <F label="Model"><Sel value={cfg.modelId} onChange={v => updateConfig(idx, "modelId", v)} mono>{seriesData?.models.map(m => <option key={m.id} value={m.id}>{m.name} · {m.tier}</option>)}</Sel></F>
@@ -693,10 +680,10 @@ function ServerPanel({ configs, updateConfig, addConfig, removeConfig, seg, rec,
                 <F label="OS"><Sel value={cfg.osId} onChange={v => updateConfig(idx, "osId", v)}>{OS_OPT.map(o => <option key={o.id} value={o.id}>{o.label}{o.priceAdder > 0 ? ` (+${fmt(o.priceAdder)})` : ""}</option>)}</Sel></F>
                 <F label="PSU"><Sel value={cfg.psuId} onChange={v => updateConfig(idx, "psuId", v)}>{PSU_OPT.map(p => <option key={p.id} value={p.id}>{p.label} (+{fmt(p.priceAdder)})</option>)}</Sel></F>
                 <F label="Support"><Sel value={cfg.supportId} onChange={v => updateConfig(idx, "supportId", v)}>{SUPPORT_OPT.map(s => <option key={s.id} value={s.id}>{s.label} (+{fmt(s.priceAdder)})</option>)}</Sel></F>
-                <F label="Quantity"><div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <button onClick={() => updateConfig(idx, "qty", Math.max(1, cfg.qty - 1))} style={{ width: 30, height: 32, borderRadius: 5, border: "1px solid #bfdbfe", background: "#f0f7ff", color: "#1e3a5f", cursor: "pointer", fontSize: 16, fontWeight: 700 }}>−</button>
-                  <input type="number" min={1} value={cfg.qty} onChange={e => updateConfig(idx, "qty", Math.max(1, parseInt(e.target.value) || 1))} style={{ flex: 1, background: "#f0f7ff", border: "1px solid #bfdbfe", borderRadius: 5, padding: "6px", color: "#0369a1", fontSize: 15, fontWeight: 700, textAlign: "center", fontFamily: "'JetBrains Mono',monospace" }} />
-                  <button onClick={() => updateConfig(idx, "qty", cfg.qty + 1)} style={{ width: 30, height: 32, borderRadius: 5, border: "1px solid #bfdbfe", background: "#f0f7ff", color: "#1e3a5f", cursor: "pointer", fontSize: 16, fontWeight: 700 }}>+</button>
+                <F label="Quantity"><div className="boq-qty-control">
+                  <button type="button" onClick={() => updateConfig(idx, "qty", Math.max(1, cfg.qty - 1))} className="boq-qty-btn">−</button>
+                  <input type="number" min={1} value={cfg.qty} onChange={e => updateConfig(idx, "qty", Math.max(1, parseInt(e.target.value) || 1))} className="boq-qty-input" />
+                  <button type="button" onClick={() => updateConfig(idx, "qty", cfg.qty + 1)} className="boq-qty-btn">+</button>
                 </div></F>
               </div>
             </div>
@@ -844,23 +831,21 @@ function InfraPanel({ cat, categoryKey, selections, updateQty, rec, seg, fmt }) 
   const filteredItems = brandFilter === "all" ? cat.items : cat.items.filter(i => i.brand === brandFilter);
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-        <div style={{ width: 44, height: 44, background: `${cat.color}18`, border: `2px solid ${cat.color}35`, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>{cat.icon}</div>
+      <div className="boq-layer-header">
+        <div className="boq-layer-icon">{categoryKey?.slice(0, 3).toUpperCase() || "CAT"}</div>
         <div>
-          <h2 style={{ fontWeight: 700, fontSize: 17, color: "#0f2644" }}>{cat.label}</h2>
-          <div style={{ fontSize: 10, color: "#7aa3c0" }}>{cat.items.length} products available{rec ? ` · ${rec.items.length} recommended for ${seg?.label}` : ""}</div>
+          <h2 className="boq-layer-title">{cat.label}</h2>
+          <div className="boq-layer-meta">{cat.items.length} products{rec ? ` · ${rec.items.length} recommended for ${seg?.label}` : ""}</div>
         </div>
       </div>
 
       {hasBrands && (
-        <div style={{ marginBottom: 16, padding: "12px 16px", background: "#fff", border: "1.5px solid #bfdbfe", borderRadius: 10, boxShadow: "0 1px 4px #1e40af08" }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "#1e3a5f", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 14 }}>🏷️</span> Filter by OEM Brand
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            <button onClick={() => setBrandFilter("all")} style={{ padding: "6px 16px", borderRadius: 20, border: `2px solid ${brandFilter === "all" ? "#1e40af" : "#bfdbfe"}`, background: brandFilter === "all" ? "#1e40af" : "#fff", color: brandFilter === "all" ? "#fff" : "#4b7fa6", cursor: "pointer", fontSize: 11, fontWeight: 700, fontFamily: "inherit", transition: "all 0.12s" }}>All Brands</button>
+        <div className="boq-filter-bar">
+          <div className="boq-filter-label">Filter by OEM brand</div>
+          <div className="boq-filter-chips">
+            <button type="button" onClick={() => setBrandFilter("all")} className={`boq-filter-chip${brandFilter === "all" ? " boq-filter-chip-active" : ""}`}>All brands</button>
             {uniqueBrands.map(b => (
-              <button key={b} onClick={() => setBrandFilter(b)} style={{ padding: "6px 16px", borderRadius: 20, border: `2px solid ${brandFilter === b ? BRAND_COLORS[b] : "#bfdbfe"}`, background: brandFilter === b ? BRAND_COLORS[b] : "#fff", color: brandFilter === b ? "#fff" : BRAND_COLORS[b] || "#4b7fa6", cursor: "pointer", fontSize: 11, fontWeight: 700, fontFamily: "inherit", transition: "all 0.12s" }}>
+              <button key={b} type="button" onClick={() => setBrandFilter(b)} className={`boq-filter-chip${brandFilter === b ? " boq-filter-chip-active" : ""}`} style={brandFilter === b ? { background: BRAND_COLORS[b], borderColor: BRAND_COLORS[b] } : { color: BRAND_COLORS[b], borderColor: BRAND_COLORS[b] }}>
                 {BRAND_LABELS[b] || b.toUpperCase()}
               </button>
             ))}
@@ -869,18 +854,16 @@ function InfraPanel({ cat, categoryKey, selections, updateQty, rec, seg, fmt }) 
       )}
 
       {rec && (
-        <div style={{ background: `${seg.color}08`, border: `1.5px solid ${seg.color}30`, borderRadius: 10, padding: "12px 16px", marginBottom: 16 }}>
-          <div style={{ fontSize: 10, color: seg.color, fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}>
-            ★ Recommended for {seg.label}
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+        <div className="boq-rec-banner">
+          <div className="boq-rec-banner-label">Recommended for {seg.label}</div>
+          <div className="boq-filter-chips">
             {rec.items.map(id => {
               const item = cat.items.find(i => i.id === id); if (!item) return null;
               return (
-                <div key={id} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: `${seg.color}12`, border: `1px solid ${seg.color}35`, borderRadius: 6, padding: "4px 10px", fontSize: 10, color: seg.color, fontWeight: 600 }}>
-                  {item.brand && <span style={{ fontSize: 8, fontWeight: 700, background: BRAND_COLORS[item.brand] || seg.color, color: "#fff", borderRadius: 2, padding: "1px 5px" }}>{BRAND_LABELS[item.brand] || item.brand.toUpperCase()}</span>}
+                <span key={id} className="boq-rec-chip">
+                  {item.brand && <BrandBadge brand={item.brand} />}
                   {item.name}
-                </div>
+                </span>
               );
             })}
           </div>
@@ -892,31 +875,33 @@ function InfraPanel({ cat, categoryKey, selections, updateQty, rec, seg, fmt }) 
         const isRec = rec?.items.includes(item.id);
         const reason = rec?.reasons?.[item.id];
         return (
-          <div key={item.id} style={{ background: qty > 0 ? `${cat.color}06` : "#fff", border: `2px solid ${qty > 0 ? cat.color : isRec ? cat.color + "45" : "#dbeafe"}`, borderRadius: 11, padding: "13px 16px", marginBottom: 9, transition: "all 0.15s", boxShadow: qty > 0 ? `0 2px 12px ${cat.color}18` : "0 1px 3px #1e40af05" }}>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
+          <div key={item.id} className={`boq-product-row${qty > 0 ? " boq-product-row-selected" : ""}${isRec ? " boq-product-row-rec" : ""}`}>
+            <div className="boq-product-row-inner">
+              <div className="boq-product-main">
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5, flexWrap: "wrap" }}>
-                  {isRec && <span style={{ background: `${seg?.color}25`, border: `1px solid ${seg?.color}50`, borderRadius: 4, padding: "2px 7px", fontSize: 9, color: seg?.color, fontWeight: 700, flexShrink: 0 }}>★ RECOMMENDED</span>}
+                  {isRec && <span className="boq-tag-rec">Recommended</span>}
                   <BrandBadge brand={item.brand} />
-                  <span style={{ fontWeight: 700, fontSize: 13, color: "#0f2644" }}>{item.name}</span>
-                  {categoryKey && <Link to={`/products/${categoryKey}/${item.id}`} style={{ fontSize: 9, color: cat.color, textDecoration: "none", fontWeight: 600 }}>View →</Link>}
+                  <span className="boq-product-name">{item.name}</span>
+                  {categoryKey && <Link to={`/products/${categoryKey}/${item.id}`} style={{ fontSize: "0.625rem", color: "var(--boq-accent)", textDecoration: "none", fontWeight: 600 }}>View →</Link>}
                 </div>
-                <div style={{ fontSize: 11, color: "#7aa3c0", marginBottom: reason ? 6 : 0, lineHeight: 1.5 }}>{item.spec}</div>
-                {reason && <div style={{ fontSize: 10, color: "#1e3a5f", background: "#e8f2fb", borderRadius: 6, padding: "6px 10px", borderLeft: `3px solid ${seg?.color || cat.color}`, lineHeight: 1.6, fontWeight: 500 }}>💡 {reason}</div>}
+                <div className="boq-product-spec">{item.spec}</div>
+                {reason && <div className="boq-product-reason">{reason}</div>}
               </div>
-              <div style={{ textAlign: "right", minWidth: 90, flexShrink: 0 }}>
-                <div style={{ fontSize: 15, color: cat.color, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>{fmt(item.unitPrice)}</div>
-                <div style={{ fontSize: 9, color: "#bfdbfe", marginTop: 1 }}>per unit</div>
+              <div className="boq-price-block">
+                <div className="boq-price-value">{fmt(item.unitPrice)}</div>
+                <div className="boq-price-unit">per unit</div>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
-                <button onClick={() => updateQty(item.id, -1)} disabled={qty === 0} style={{ width: 30, height: 30, borderRadius: 6, border: `1.5px solid ${qty > 0 ? cat.color : "#bfdbfe"}`, background: qty > 0 ? `${cat.color}15` : "#f0f7ff", color: qty === 0 ? "#bfdbfe" : cat.color, cursor: qty === 0 ? "not-allowed" : "pointer", fontSize: 17, fontWeight: 700 }}>−</button>
-                <span style={{ width: 30, textAlign: "center", fontSize: 15, fontWeight: 700, color: qty > 0 ? cat.color : "#bfdbfe", fontFamily: "'JetBrains Mono',monospace" }}>{qty}</span>
-                <button onClick={() => updateQty(item.id, 1)} style={{ width: 30, height: 30, borderRadius: 6, border: `1.5px solid ${cat.color}`, background: `${cat.color}15`, color: cat.color, cursor: "pointer", fontSize: 17, fontWeight: 700 }}>+</button>
+              <div className="boq-qty-group">
+                <button type="button" onClick={() => updateQty(item.id, -1)} disabled={qty === 0} className="boq-qty-btn">−</button>
+                <span style={{ width: 28, textAlign: "center", fontSize: "0.875rem", fontWeight: 700, fontFamily: "var(--boq-mono)", color: qty > 0 ? "var(--boq-accent)" : "var(--boq-ink-muted)" }}>{qty}</span>
+                <button type="button" onClick={() => updateQty(item.id, 1)} className="boq-qty-btn">+</button>
               </div>
-              {qty > 0 && <div style={{ minWidth: 88, textAlign: "right", flexShrink: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#0f2644", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(item.unitPrice * qty)}</div>
-                <div style={{ fontSize: 9, color: "#7aa3c0" }}>subtotal</div>
-              </div>}
+              {qty > 0 && (
+                <div className="boq-price-block">
+                  <div className="boq-price-value" style={{ color: "var(--boq-ink)" }}>{fmt(item.unitPrice * qty)}</div>
+                  <div className="boq-price-unit">subtotal</div>
+                </div>
+              )}
             </div>
           </div>
         );
@@ -941,12 +926,11 @@ function ReportView({ report, projectInfo, serverConfigs, infraSelections, grand
   };
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem", fontFamily: "'Outfit',sans-serif" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');*{box-sizing:border-box}@media print{.no-print{display:none!important}}`}</style>
-      <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }} className="no-print">
-        <button onClick={onBack} style={{ padding: "9px 18px", borderRadius: 7, border: "1px solid #bfdbfe", background: "#fff", color: "#1e40af", cursor: "pointer", fontSize: 12, fontFamily: "inherit", fontWeight: 600 }}>← Back</button>
-        <button onClick={handleDownloadPdf} style={{ padding: "9px 18px", borderRadius: 7, border: "none", background: "linear-gradient(135deg,#059669,#047857)", color: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, fontFamily: "inherit" }}>⬇ Download PDF</button>
-        <button onClick={() => window.print()} style={{ padding: "9px 18px", borderRadius: 7, border: "1px solid #bfdbfe", background: "#f0f7ff", color: "#1e40af", cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "inherit" }}>🖨 Print / Save PDF</button>
+    <div className="boq-report-page">
+      <div className="boq-report-actions boq-no-print">
+        <button type="button" onClick={onBack} className="boq-btn boq-btn-ghost">← Back</button>
+        <button type="button" onClick={handleDownloadPdf} className="boq-btn boq-btn-success">Download PDF</button>
+        <button type="button" onClick={() => window.print()} className="boq-btn boq-btn-ghost">Print / Save PDF</button>
       </div>
       {pdfError && <div style={{ marginBottom: 16, padding: "12px 16px", background: "#fff1f2", border: "1.5px solid #fecdd3", borderRadius: 8, fontSize: 12, color: "#be123c" }}>{pdfError}</div>}
       <div style={{ background: "#fff", color: "#111", borderRadius: 16, overflow: "hidden", boxShadow: "0 20px 60px rgba(30,64,175,0.15)" }}>
@@ -1078,16 +1062,16 @@ function AIScreen({ onBack, onResult }) {
     setLoading(false);
   };
   return (
-    <div className="boq-app boq-page-gradient">
+    <div className="boq-app">
       <header className="boq-header">
         <div className="boq-header-left">
           <button type="button" onClick={onBack} className="boq-btn boq-btn-ghost">← Back</button>
-          <div className="boq-mark" aria-hidden>AI</div>
+          <div className="boq-hv-icon" style={{ width: 36, height: 36 }}>AI</div>
           <div>
-            <div className="boq-brand-title">AI Requirements Engine</div>
-            <div className="boq-brand-sub">Powered by Groq</div>
+            <div className="boq-brand-title">Requirements engine</div>
+            <div className="boq-brand-sub">Automated BOQ generation</div>
           </div>
-          <span className="boq-badge boq-badge-ai">BOQ Generator</span>
+          <span className="boq-badge boq-badge-ai">BOQ</span>
         </div>
       </header>
       <div className="boq-ai-container">
@@ -1118,8 +1102,8 @@ function AIScreen({ onBack, onResult }) {
                   </div>
                 ))}
                 {error && <div className="boq-alert boq-alert-error" role="alert">{error}</div>}
-                <button type="button" onClick={generate} disabled={loading} className="boq-btn boq-btn-ai boq-btn-lg" style={{ marginTop: "0.5rem" }}>
-                  {loading ? <><span className="boq-spinner" />Generating your BOQ...</> : "🤖 Generate AI BOQ"}
+                <button type="button" onClick={generate} disabled={loading} className="boq-btn boq-btn-primary boq-btn-lg" style={{ marginTop: "0.5rem" }}>
+                  {loading ? <><span className="boq-spinner" />Generating BOQ…</> : "Generate BOQ"}
                 </button>
               </div>
             </div>
@@ -1131,50 +1115,75 @@ function AIScreen({ onBack, onResult }) {
 }
 
 function AIResultPanel({ result, fmt, onRerun }) {
-  if (!result) return (<div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 320, gap: 14, color: "#7aa3c0" }}><div style={{ fontSize: 40 }}>🤖</div><div style={{ fontSize: 14, fontWeight: 500 }}>No AI BOQ generated yet.</div><button onClick={onRerun} style={{ padding: "9px 22px", borderRadius: 7, border: "none", background: "linear-gradient(135deg,#a855f7,#6366f1)", color: "#fff", cursor: "pointer", fontSize: 12, fontFamily: "inherit", fontWeight: 700 }}>Generate AI BOQ →</button></div>);
-  const cats = [{ key: "compute", label: "Compute", icon: "🖥️", color: "#1e40af" }, { key: "storage", label: "Storage", icon: "💾", color: "#059669" }, { key: "network", label: "Network", icon: "🔗", color: "#7c3aed" }, { key: "backup", label: "Backup", icon: "🔒", color: "#d97706" }, { key: "monitoring", label: "Monitoring", icon: "📊", color: "#e11d48" }, { key: "database", label: "Database", icon: "🗄️", color: "#0ea5e9" }];
+  if (!result) return (
+    <div className="boq-ai-empty">
+      <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--boq-ink-soft)" }}>No generated BOQ yet</div>
+      <button type="button" onClick={onRerun} className="boq-btn boq-btn-primary">Generate BOQ</button>
+    </div>
+  );
+  const cats = [
+    { key: "compute", label: "Compute", code: "CMP" },
+    { key: "storage", label: "Storage", code: "STG" },
+    { key: "network", label: "Network", code: "NET" },
+    { key: "backup", label: "Backup", code: "BKP" },
+    { key: "monitoring", label: "Monitoring", code: "MON" },
+    { key: "database", label: "Database", code: "DB" },
+  ];
   let grandTotal = 0;
   cats.forEach(c => { (result[c.key] || []).forEach(i => { grandTotal += i.unitPrice * i.qty; }); });
   const gst = grandTotal * 0.18;
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+      <div className="boq-panel-toolbar">
         <div>
-          <h2 style={{ fontWeight: 700, fontSize: 18, color: "#0f2644", marginBottom: 5 }}>🤖 AI-Generated BOQ</h2>
-          {result.segment && <span style={{ background: "#a855f715", border: "1px solid #a855f740", borderRadius: 5, padding: "3px 10px", fontSize: 10, color: "#a855f7", fontWeight: 700 }}>{result.segment}</span>}
+          <h2 className="boq-panel-title">Generated BOQ</h2>
+          {result.segment && <span className="boq-badge boq-badge-ai" style={{ marginTop: "0.35rem" }}>{result.segment}</span>}
         </div>
-        <button onClick={onRerun} style={{ padding: "7px 16px", borderRadius: 6, border: "none", background: "linear-gradient(135deg,#a855f7,#6366f1)", color: "#fff", cursor: "pointer", fontSize: 11, fontFamily: "inherit", fontWeight: 700 }}>↺ Regenerate</button>
+        <button type="button" onClick={onRerun} className="boq-btn boq-btn-ghost">Regenerate</button>
       </div>
-      {result.summary && <div style={{ marginBottom: 18, padding: "13px 16px", background: "#eff6ff", borderLeft: "4px solid #1e40af", borderRadius: "0 8px 8px 0", fontSize: 12, color: "#1e3a5f", lineHeight: 1.7, fontWeight: 500 }}>{result.summary}</div>}
+      {result.summary && <div className="boq-callout" style={{ marginBottom: "1.125rem" }}>{result.summary}</div>}
       {cats.map(cat => {
         const items = result[cat.key] || []; if (!items.length) return null;
         const catTotal = items.reduce((s, i) => s + i.unitPrice * i.qty, 0);
-        return (<div key={cat.key} style={{ marginBottom: 16, border: `2px solid ${cat.color}25`, borderRadius: 11, overflow: "hidden", boxShadow: "0 1px 4px #1e40af05" }}>
-          <div style={{ background: `linear-gradient(90deg,${cat.color}12,#f0f7ff)`, borderBottom: `1px solid ${cat.color}20`, padding: "10px 16px", display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 16 }}>{cat.icon}</span>
-            <span style={{ fontWeight: 700, fontSize: 14, color: "#0f2644", flex: 1 }}>{cat.label}</span>
-            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: cat.color, fontWeight: 700 }}>{fmt(catTotal)}</span>
+        return (
+          <div key={cat.key} className="boq-ai-table-wrap">
+            <div className="boq-ai-table-head">
+              <span className="boq-layer-icon">{cat.code}</span>
+              <span className="boq-layer-title" style={{ flex: 1, fontSize: "0.875rem" }}>{cat.label}</span>
+              <span className="boq-price-value">{fmt(catTotal)}</span>
+            </div>
+            <table className="boq-ai-table">
+              <thead>
+                <tr>{["Item", "Spec", "Qty", "Unit Price", "Total"].map(h => (
+                  <th key={h} className={["Qty", "Unit Price", "Total"].includes(h) ? "num" : ""}>{h}</th>
+                ))}</tr>
+              </thead>
+              <tbody>
+                {items.map((item, i) => (
+                  <tr key={i}>
+                    <td>
+                      <div className="boq-product-name">{item.item}</div>
+                      <div className="boq-product-reason">{item.reason}</div>
+                    </td>
+                    <td className="boq-product-spec">{item.spec}</td>
+                    <td className="num">{item.qty}</td>
+                    <td className="num">{fmt(item.unitPrice)}</td>
+                    <td className="num boq-price-value" style={{ fontSize: "0.8125rem" }}>{fmt(item.unitPrice * item.qty)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
-            <thead><tr style={{ background: "#f0f7ff" }}>{["Item", "Spec", "Qty", "Unit Price", "Total"].map(h => (<th key={h} style={{ padding: "8px 12px", textAlign: ["Qty", "Unit Price", "Total"].includes(h) ? "right" : "left", fontSize: 9, color: "#7aa3c0", fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>{h}</th>))}</tr></thead>
-            <tbody>{items.map((item, i) => (<tr key={i} style={{ background: i % 2 === 0 ? "#f8faff" : "#fff", borderBottom: "1px solid #e0e7ff" }}>
-              <td style={{ padding: "10px 12px" }}><div style={{ fontWeight: 700, color: "#0f2644", marginBottom: 3 }}>{item.item}</div><div style={{ fontSize: 10, color: "#3b82f6", lineHeight: 1.5, borderLeft: `3px solid ${cat.color}`, paddingLeft: 7 }}>{item.reason}</div></td>
-              <td style={{ padding: "10px 12px", color: "#7aa3c0", maxWidth: 180, lineHeight: 1.5 }}>{item.spec}</td>
-              <td style={{ padding: "10px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: "#1e3a5f", fontWeight: 600 }}>{item.qty}</td>
-              <td style={{ padding: "10px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", color: "#7aa3c0" }}>{fmt(item.unitPrice)}</td>
-              <td style={{ padding: "10px 12px", textAlign: "right", fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, color: cat.color }}>{fmt(item.unitPrice * item.qty)}</td>
-            </tr>))}</tbody>
-          </table>
-        </div>);
+        );
       })}
-      <div style={{ marginTop: 8, padding: "16px 22px", background: "linear-gradient(135deg,#1e3a8a,#0369a1)", border: "none", borderRadius: 10, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 4px 16px #1e40af25" }}>
+      <div className="boq-ai-total-bar">
         <div>
-          <div style={{ fontSize: 10, color: "#93c5fd", marginBottom: 2 }}>GST @ 18%: {fmt(gst)}</div>
-          <div style={{ fontSize: 10, color: "#93c5fd" }}>Grand Total incl. GST: <span style={{ fontWeight: 700, color: "#fff" }}>{fmt(grandTotal + gst)}</span></div>
+          <div className="boq-ai-total-label">GST @ 18%: {fmt(gst)}</div>
+          <div className="boq-ai-total-label">Total incl. GST: {fmt(grandTotal + gst)}</div>
         </div>
         <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: 10, color: "#93c5fd", marginBottom: 2 }}>Grand Total (excl. GST)</div>
-          <div style={{ fontSize: 26, fontWeight: 800, color: "#ffffff", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(grandTotal)}</div>
+          <div className="boq-ai-total-label">Grand total (excl. GST)</div>
+          <div className="boq-ai-total-value">{fmt(grandTotal)}</div>
         </div>
       </div>
     </div>
