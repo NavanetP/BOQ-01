@@ -298,11 +298,16 @@ body {
   max-width: 32rem;
 }
 
+.boq-project-details {
+  margin-bottom: 1.25rem;
+}
+
 .boq-home-actions {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   margin-bottom: 1.75rem;
+  margin-top: 1.25rem;
 }
 
 .boq-home-meta {

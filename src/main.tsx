@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import { AuthProvider } from './context/AuthContext'
+import { ProjectProvider } from './context/ProjectContext'
 import './index.css'
 import App from './App.tsx'
 
@@ -12,9 +13,11 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <GoogleOAuthProvider clientId={clientId}>
       <AuthProvider>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
+        <ProjectProvider>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </ProjectProvider>
       </AuthProvider>
     </GoogleOAuthProvider>
   </StrictMode>,

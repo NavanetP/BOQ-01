@@ -364,7 +364,7 @@ function Configurator() {
   const { segmentId, tab } = useParams();
   const navigate = useNavigate();
   const [segKey, setSegKey] = useState(null);
-  const [projectInfo, setProjectInfo] = useState({ name: "", client: "", date: new Date().toISOString().slice(0, 10), engineer: "", notes: "" });
+  const { projectInfo } = useProject();
   const [serverConfigs, setServerConfigs] = useState([]);
   const [infraSelections, setInfraSelections] = useState({});
   const [aiBoqResult, setAiBoqResult] = useState(null);
@@ -456,25 +456,6 @@ function Configurator() {
       <HypervisorSelector infraSelections={infraSelections} updateInfraQty={updateInfraQty} rec={rec} seg={seg} />
       <div className="boq-layout">
         <aside className="boq-sidebar">
-          <div className="boq-form-card">
-            <div className="boq-form-card-header">
-              <h2>Project Details</h2>
-              <p>Metadata included on your BOQ document</p>
-            </div>
-            <div className="boq-form-body">
-              {[["name", "Project Name", "Acme DC Expansion"], ["client", "Client / Organization", ""], ["engineer", "Presales Engineer", ""], ["date", "Quote Date", ""]].map(([f, l, ph]) => (
-                <div key={f} className="boq-form-field" style={{ marginBottom: "0.85rem" }}>
-                  <label className="boq-label" htmlFor={`proj-${f}`}>{l}</label>
-                  <input id={`proj-${f}`} type={f === "date" ? "date" : "text"} className={`boq-input${f === "date" ? "" : " boq-input-mono"}`} placeholder={ph} value={projectInfo[f]} onChange={e => setProjectInfo(p => ({ ...p, [f]: e.target.value }))} />
-                </div>
-              ))}
-              <div className="boq-form-field">
-                <label className="boq-label" htmlFor="proj-notes">Notes</label>
-                <textarea id="proj-notes" className="boq-textarea" rows={3} placeholder="Scope, assumptions, special requirements..." value={projectInfo.notes} onChange={e => setProjectInfo(p => ({ ...p, notes: e.target.value }))} />
-              </div>
-            </div>
-          </div>
-          <div className="boq-divider" />
           <p className="boq-label" style={{ marginBottom: "0.5rem" }}>Infrastructure Layers</p>
           <nav className="boq-nav-tabs">
             {TABS.map(t => {
@@ -510,7 +491,7 @@ const HV_VENDORS = [
   { key: "oracle", label: "Oracle", color: "#f80000", icon: "☁️", ids: ["hv-oracle-vm", "hv-oracle-olvm", "hv-oracle-oci-hci"] },
   { key: "nutanix", label: "Nutanix", color: "#024da1", icon: "🟦", ids: ["hv-nutanix-aos", "hv-nutanix-prism", "hv-nutanix-nc2", "hv-nutanix-files"] },
   { key: "hpe", label: "HPE", color: "#01a982", icon: "🟢", ids: ["hv-hpe-morpheus", "hv-hpe-simplivity", "hv-hpe-synergy-cm"] },
-  
+
 ];
 
 function HypervisorSelector({ infraSelections, updateInfraQty, rec, seg }) {
@@ -1206,6 +1187,7 @@ function AIRoute() {
 }
 
 import { useAuth } from "./context/AuthContext";
+import { useProject } from "./context/ProjectContext";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -1215,7 +1197,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export default function App() {
+export default function App()
+{
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />

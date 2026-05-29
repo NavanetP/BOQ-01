@@ -3,6 +3,7 @@ import { INFRA_CATALOGUE, INFRA_CATEGORY_ORDER, infraCatalogueEntries } from "..
 import { SEGMENTS } from "../data/segments";
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
+import ProjectDetailsCard from '../components/ProjectDetailsCard';
 
 export default function HomePage() {
   const { isAuthenticated, login, logout, user } = useAuth();
@@ -83,6 +84,7 @@ export default function HomePage() {
               Build full-stack BOQs by vertical—compute, network, storage, hypervisor—or
               draft requirements and let the engine propose a bill.
             </p>
+            <ProjectDetailsCard />
             <div className="boq-home-actions">
               <Link to="/segments" className="boq-btn boq-btn-primary boq-btn-lg">
                 Open segment index
