@@ -1,3 +1,5 @@
+import { formatMoney } from "../utils/currency";
+
 /** Sidebar / BOQ layer order (Servers tab is separate, always first). */
 export const INFRA_CATEGORY_ORDER = [
   "vmware",
@@ -134,7 +136,8 @@ export const infraCatalogueEntries = () =>
 export const BRAND_COLORS: Record<string, string> = {cisco:"#1ba0d7",juniper:"#84ba27",aruba:"#f96c1b",fortinet:"#e7222e",f5:"#e5002b",paloalto:"#fa582d"};
 export const BRAND_LABELS: Record<string, string> = {cisco:"CISCO",juniper:"JUNIPER",aruba:"ARUBA",fortinet:"FORTINET",f5:"F5",paloalto:"PALO ALTO"};
 
-export const fmt = (n: number) => new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(n);
+/** Format USD catalogue amounts (use useQuoteMoney().fmt in UI when quote currency applies). */
+export const fmt = (n: number) => formatMoney(n, "USD");
 
 export type InfraCategory = keyof typeof INFRA_CATALOGUE;
 

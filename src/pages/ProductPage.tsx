@@ -1,8 +1,12 @@
 import { Link, useParams, Navigate } from "react-router-dom";
-import { findProduct, fmt, BRAND_COLORS, BRAND_LABELS, INFRA_CATALOGUE } from "../data/catalogue";
+import { findProduct, BRAND_COLORS, BRAND_LABELS, INFRA_CATALOGUE } from "../data/catalogue";
+import { useQuoteMoney } from "../hooks/useQuoteMoney";
+import { CURRENCIES } from "../utils/currency";
 
 export default function ProductPage() {
   const { category, productId } = useParams();
+  const { fmt, settings } = useQuoteMoney();
+
   if (!category || !productId) return <Navigate to="/" replace />;
 
   const product = findProduct(category, productId);
@@ -11,6 +15,8 @@ export default function ProductPage() {
   const cat = INFRA_CATALOGUE[category as keyof typeof INFRA_CATALOGUE];
   const siblings = cat?.items ?? [];
   const brand = "brand" in product ? product.brand : undefined;
+  const currencyLabel =
+    CURRENCIES.find((c) => c.code === settings.currency)?.label ?? settings.currency;
 
   return (
     <div className="boq-app">
@@ -29,7 +35,13 @@ export default function ProductPage() {
         <article className="boq-form-card boq-product-hero">
           <div className="boq-form-card-header">
             <h2>{product.categoryLabel}</h2>
-            <p>Unit price reference (USD)</p>
+            <p>
+              Unit price reference (USD catalogue
+              {settings.currency !== "USD"
+                ? ` · shown in ${currencyLabel} at FX ${settings.fxRate}`
+                : ""}
+              )
+            </p>
           </div>
           <div className="boq-form-body">
             <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", marginBottom: "1rem", flexWrap: "wrap" }}>

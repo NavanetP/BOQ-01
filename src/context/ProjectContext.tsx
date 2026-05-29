@@ -15,6 +15,10 @@ function defaultProjectInfo(): ProjectInfo {
     date: new Date().toISOString().slice(0, 10),
     engineer: "",
     notes: "",
+    currency: "USD",
+    fxRate: 1,
+    taxRate: 18,
+    taxLabel: "GST",
   };
 }
 

@@ -1,6 +1,12 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import { fmt } from "../data/catalogue";
+import {
+  formatMoney,
+  normalizeQuoteSettings,
+  taxLineLabel,
+  totalInclTaxLabel,
+  type CurrencyCode,
+} from "./currency";
 
 export type BoqLine = {
   category: string;
@@ -11,7 +17,17 @@ export type BoqLine = {
   total: number;
 };
 
-export type ProjectInfo = { name: string; client: string; date: string; engineer: string; notes: string };
+export type ProjectInfo = {
+  name: string;
+  client: string;
+  date: string;
+  engineer: string;
+  notes: string;
+  currency?: string;
+  fxRate?: number;
+  taxRate?: number;
+  taxLabel?: string;
+};
 
 export type BoqPdfPayload = {
   projectInfo: ProjectInfo;
@@ -46,6 +62,13 @@ function slug(s: string) {
     .slice(0, 40) || "project";
 }
 
+function pdfFmt(amount: number, currency: CurrencyCode) {
+  return formatMoney(amount, currency).replace(/[^\u0020-\u00FF]/g, (ch) => {
+    const map: Record<string, string> = { "\u20B9": "INR ", "\u20AC": "EUR ", "\u00A3": "GBP " };
+    return map[ch] ?? " ";
+  });
+}
+
 export function downloadBoqPdf(opts: BoqPdfPayload): void {
   const {
     projectInfo,
@@ -60,6 +83,10 @@ export function downloadBoqPdf(opts: BoqPdfPayload): void {
     tax,
     total,
   } = opts;
+
+  const quote = normalizeQuoteSettings(projectInfo);
+  const money = (n: number) => pdfFmt(n, quote.currency);
+  const exclLabel = quote.taxRate > 0 ? `Total (excl. ${quote.taxLabel})` : "Total";
 
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
@@ -120,9 +147,9 @@ export function downloadBoqPdf(opts: BoqPdfPayload): void {
   y += 4;
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  doc.text("Grand Total (incl. 18% GST):", 14, y);
+  doc.text(pdfSafe(`${totalInclTaxLabel(quote.taxLabel, quote.taxRate)}:`, 60), 14, y);
   doc.setFont("helvetica", "normal");
-  doc.text(fmt(total), pageW - 14, y, { align: "right" });
+  doc.text(money(total), pageW - 14, y, { align: "right" });
   y += 8;
 
   if (allLines.length === 0) {
@@ -135,9 +162,9 @@ export function downloadBoqPdf(opts: BoqPdfPayload): void {
       pdfSafe(li.category, 28),
       pdfSafe(li.name, 42),
       pdfSafe(li.spec, 55),
-      fmt(li.unitPrice),
+      money(li.unitPrice),
       String(li.qty),
-      fmt(li.total),
+      money(li.total),
     ]);
 
     autoTable(doc, {
@@ -163,12 +190,14 @@ export function downloadBoqPdf(opts: BoqPdfPayload): void {
   doc.setFont("helvetica", "normal");
   let ty = y;
   const rows: [string, string][] = [
-    ["Servers subtotal", fmt(serverTotal)],
-    ["Infrastructure subtotal", fmt(infraTotal)],
-    ["Total (excl. GST)", fmt(grandTotal)],
-    ["GST @ 18%", fmt(tax)],
-    ["Grand Total (incl. GST)", fmt(total)],
+    ["Servers subtotal", money(serverTotal)],
+    ["Infrastructure subtotal", money(infraTotal)],
+    [exclLabel, money(grandTotal)],
   ];
+  if (quote.taxRate > 0) {
+    rows.push([taxLineLabel(quote.taxLabel, quote.taxRate), money(tax)]);
+  }
+  rows.push([totalInclTaxLabel(quote.taxLabel, quote.taxRate), money(total)]);
   for (const [l, v] of rows) {
     doc.text(l, pageW - 70, ty);
     doc.setFont("helvetica", "bold");
@@ -181,7 +210,7 @@ export function downloadBoqPdf(opts: BoqPdfPayload): void {
   doc.setFontSize(7);
   doc.setTextColor(100, 116, 139);
   [
-    "Prices are indicative USD; confirmed on PO.",
+    `Prices in ${quote.currency} (catalogue USD x FX ${quote.fxRate}); confirmed on PO.`,
     "Lead time 4-10 weeks. OEM warranty per option.",
     "BOQ validity 30 days from issue.",
   ].forEach((t) => {

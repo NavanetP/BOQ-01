@@ -1,7 +1,15 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, useNavigate, useParams, Navigate, Link } from "react-router-dom";
 import { SEGMENTS } from "./data/segments";
-import { INFRA_CATALOGUE, INFRA_CATEGORY_ORDER, infraCatalogueEntries, BRAND_COLORS, BRAND_LABELS, fmt } from "./data/catalogue";
+import { INFRA_CATALOGUE, INFRA_CATEGORY_ORDER, infraCatalogueEntries, BRAND_COLORS, BRAND_LABELS } from "./data/catalogue";
+import { useQuoteMoney } from "./hooks/useQuoteMoney";
+import {
+  normalizeQuoteSettings,
+  computeTaxTotals,
+  taxLineLabel,
+  totalInclTaxLabel,
+  formatMoney,
+} from "./utils/currency";
 import HomePage from "./pages/HomePage";
 import ProductPage from "./pages/ProductPage";
 import { downloadBoqPdf, type BoqPdfPayload } from "./utils/boqPdf";
@@ -312,7 +320,9 @@ const computeServerPrice = (cfg) => {
 };
 
 function buildBoqReportData({ projectInfo, serverConfigs, infraSelections, grandTotal, serverTotal, infraTotal, seg, rec }) {
-  const tax = grandTotal * 0.18, total = grandTotal + tax;
+  const quote = normalizeQuoteSettings(projectInfo);
+  const fx = quote.fxRate;
+  const { subtotal, tax, total } = computeTaxTotals(grandTotal, quote);
   const refNo = `BOQ-${Date.now().toString(36).toUpperCase()}`;
   const today = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });
   const serverLines = serverConfigs.map((cfg) => {
@@ -329,14 +339,14 @@ function buildBoqReportData({ projectInfo, serverConfigs, infraSelections, grand
     const psu = PSU_OPT.find(p => p.id === cfg.psuId);
     const up = computeServerPrice({ ...cfg, qty: 1 });
     const spec = [cpu ? `${cfg.cpuCount}x ${cpu.label}` : null, ram?.label, sto?.label, nic?.label, gpu?.id !== "gpu-none" ? gpu?.label : null, os?.id !== "os-none" ? os?.label : null, psu?.label, sup?.label].filter(Boolean).join(" | ");
-    return { category: brand?.label || "Server", color: brand?.color || "#1e40af", icon: "🖥️", name: model?.name || "-", spec, unitPrice: up, qty: cfg.qty, total: up * cfg.qty };
+    return { category: brand?.label || "Server", color: brand?.color || "#1e40af", icon: "🖥️", name: model?.name || "-", spec, unitPrice: up * fx, qty: cfg.qty, total: up * cfg.qty * fx };
   });
   const infraLines = [];
   INFRA_CATEGORY_ORDER.forEach((layer) => {
     const items = infraSelections[layer];
     if (!items) return;
     const cat = INFRA_CATALOGUE[layer];
-    Object.entries(items).forEach(([id, qty]) => { if (qty > 0) { const item = cat.items.find(i => i.id === id); if (item) infraLines.push({ category: cat.label, color: cat.color, icon: cat.icon, name: item.name, spec: item.spec, unitPrice: item.unitPrice, qty, total: item.unitPrice * qty }); } });
+    Object.entries(items).forEach(([id, qty]) => { if (qty > 0) { const item = cat.items.find(i => i.id === id); if (item) infraLines.push({ category: cat.label, color: cat.color, icon: cat.icon, name: item.name, spec: item.spec, unitPrice: item.unitPrice * fx, qty, total: item.unitPrice * qty * fx }); } });
   });
   const allLines = [...serverLines, ...infraLines];
   const payload: BoqPdfPayload = {
@@ -346,13 +356,13 @@ function buildBoqReportData({ projectInfo, serverConfigs, infraSelections, grand
     segmentLabel: seg?.label,
     rationale: rec?.rationale,
     allLines,
-    serverTotal,
-    infraTotal,
-    grandTotal,
+    serverTotal: serverTotal * fx,
+    infraTotal: infraTotal * fx,
+    grandTotal: subtotal,
     tax,
     total,
   };
-  return { payload, allLines, refNo, today, tax, total };
+  return { payload, allLines, refNo, today, tax, total, quote };
 }
 
 function BrandBadge({ brand }) {
@@ -365,6 +375,7 @@ function Configurator() {
   const navigate = useNavigate();
   const [segKey, setSegKey] = useState(null);
   const { projectInfo } = useProject();
+  const { fmt, totalsFromUsd } = useQuoteMoney();
   const [serverConfigs, setServerConfigs] = useState([]);
   const [infraSelections, setInfraSelections] = useState({});
   const [aiBoqResult, setAiBoqResult] = useState(null);
@@ -400,13 +411,14 @@ function Configurator() {
 
   const serverTotal = serverConfigs.reduce((a, c) => a + computeServerPrice(c), 0);
   const infraTotal = Object.entries(infraSelections).reduce((t, [layer, items]) => t + Object.entries(items).reduce((s, [id, qty]) => { const item = INFRA_CATALOGUE[layer]?.items.find(i => i.id === id); return s + (item ? item.unitPrice * qty : 0); }, 0), 0);
-  const grandTotal = serverTotal + infraTotal;
+  const grandTotalUsd = serverTotal + infraTotal;
+  const quoteTotals = totalsFromUsd(grandTotalUsd);
   const seg = segmentId ? SEGMENTS[segmentId] : null;
   const rec = segmentId ? SEGMENT_RECOMMENDATIONS[segmentId] : null;
 
   const handleGenerateBoq = () => {
-    if (grandTotal <= 0) return;
-    const { payload } = buildBoqReportData({ projectInfo, serverConfigs, infraSelections, grandTotal, serverTotal, infraTotal, seg, rec });
+    if (grandTotalUsd <= 0) return;
+    const { payload } = buildBoqReportData({ projectInfo, serverConfigs, infraSelections, grandTotal: grandTotalUsd, serverTotal, infraTotal, seg, rec });
     try {
       downloadBoqPdf(payload);
       navigate(`/segments/${segmentId}/report`);
@@ -418,8 +430,8 @@ function Configurator() {
   };
 
   if (tab === "report") {
-    const report = buildBoqReportData({ projectInfo, serverConfigs, infraSelections, grandTotal, serverTotal, infraTotal, seg, rec });
-    return <ReportView report={report} projectInfo={projectInfo} serverConfigs={serverConfigs} infraSelections={infraSelections} grandTotal={grandTotal} serverTotal={serverTotal} infraTotal={infraTotal} seg={seg} rec={rec} fmt={fmt} onBack={() => navigate(`/segments/${segmentId}/servers`)} />;
+    const report = buildBoqReportData({ projectInfo, serverConfigs, infraSelections, grandTotal: grandTotalUsd, serverTotal, infraTotal, seg, rec });
+    return <ReportView report={report} projectInfo={projectInfo} serverConfigs={serverConfigs} infraSelections={infraSelections} grandTotalUsd={grandTotalUsd} serverTotal={serverTotal} infraTotal={infraTotal} seg={seg} rec={rec} fmt={fmt} quote={report.quote} quoteTotals={quoteTotals} onBack={() => navigate(`/segments/${segmentId}/servers`)} />;
   }
 
   const tabCode = (key: string) => {
@@ -448,9 +460,9 @@ function Configurator() {
           <button type="button" onClick={() => navigate("/segments")} className="boq-btn boq-btn-ghost">Segments</button>
           <div className="boq-total-pill">
             <span>TOTAL</span>
-            <span>{fmt(grandTotal)}</span>
+            <span>{fmt(grandTotalUsd)}</span>
           </div>
-          <button type="button" onClick={handleGenerateBoq} disabled={grandTotal === 0} className="boq-btn boq-btn-primary">Generate BOQ →</button>
+          <button type="button" onClick={handleGenerateBoq} disabled={grandTotalUsd === 0} className="boq-btn boq-btn-primary">Generate BOQ →</button>
         </div>
       </header>
       <HypervisorSelector infraSelections={infraSelections} updateInfraQty={updateInfraQty} rec={rec} seg={seg} />
@@ -495,6 +507,7 @@ const HV_VENDORS = [
 ];
 
 function HypervisorSelector({ infraSelections, updateInfraQty, rec, seg }) {
+  const { fmt } = useQuoteMoney();
   const hvItems = INFRA_CATALOGUE.vmware?.items || [];
   const selectedIds = Object.keys(infraSelections.vmware || {});
   const [expanded, setExpanded] = useState(false);
@@ -552,7 +565,7 @@ function HypervisorSelector({ infraSelections, updateInfraQty, rec, seg }) {
                         {isSelected && <span>✓</span>}
                         <span>
                           <div style={{ lineHeight: 1.2 }}>{item.name}</div>
-                          <div className="boq-hv-chip-price">{item.unitPrice === 0 ? "Free" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(item.unitPrice)}</div>
+                          <div className="boq-hv-chip-price">{item.unitPrice === 0 ? "Free" : fmt(item.unitPrice)}</div>
                         </span>
                       </button>
                     );
@@ -891,8 +904,12 @@ function InfraPanel({ cat, categoryKey, selections, updateQty, rec, seg, fmt }) 
   );
 }
 
-function ReportView({ report, projectInfo, serverConfigs, infraSelections, grandTotal, serverTotal, infraTotal, seg, rec, fmt, onBack }) {
+function ReportView({ report, projectInfo, serverConfigs, infraSelections, grandTotalUsd, serverTotal, infraTotal, seg, rec, fmt, quote, quoteTotals, onBack }) {
   const { allLines, refNo, today, tax, total, payload } = report;
+  const { subtotal, tax: taxAmt, total: totalAmt } = quoteTotals;
+  const taxLbl = taxLineLabel(quote.taxLabel, quote.taxRate);
+  const totalLbl = totalInclTaxLabel(quote.taxLabel, quote.taxRate);
+  const exclLbl = quote.taxRate > 0 ? `Total (excl. ${quote.taxLabel})` : "Total";
   const [pdfError, setPdfError] = useState("");
 
   const handleDownloadPdf = () => {
@@ -932,8 +949,8 @@ function ReportView({ report, projectInfo, serverConfigs, infraSelections, grand
             <div style={{ textAlign: "right" }}>
               <div style={{ background: "rgba(255,255,255,0.2)", color: "#ffffff", fontWeight: 700, fontSize: 11, padding: "5px 14px", borderRadius: 5, marginBottom: 10, display: "inline-block", fontFamily: "'JetBrains Mono',monospace", border: "1px solid rgba(255,255,255,0.3)" }}>{refNo}</div>
               <div style={{ padding: "14px 18px", background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: 10 }}>
-                <div style={{ fontSize: 9, color: "#93c5fd", textTransform: "uppercase", letterSpacing: 1.5, fontFamily: "'JetBrains Mono',monospace", marginBottom: 4 }}>Grand Total (incl. 18% GST)</div>
-                <div style={{ fontSize: 26, fontWeight: 800, color: "#ffffff", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(total)}</div>
+                <div style={{ fontSize: 9, color: "#93c5fd", textTransform: "uppercase", letterSpacing: 1.5, fontFamily: "'JetBrains Mono',monospace", marginBottom: 4 }}>{totalLbl}</div>
+                <div style={{ fontSize: 26, fontWeight: 800, color: "#ffffff", fontFamily: "'JetBrains Mono',monospace" }}>{formatMoney(totalAmt, quote.currency)}</div>
                 <div style={{ fontSize: 10, color: "#93c5fd", marginTop: 2 }}>{allLines.length} line items</div>
               </div>
             </div>
@@ -966,28 +983,38 @@ function ReportView({ report, projectInfo, serverConfigs, infraSelections, grand
               <td style={{ padding: "8px 12px" }}><span style={{ display: "inline-flex", alignItems: "center", gap: 3, background: `${li.color}12`, border: `1px solid ${li.color}30`, borderRadius: 4, padding: "2px 8px", fontSize: 9, color: li.color, fontWeight: 700 }}>{li.icon} {li.category}</span></td>
               <td style={{ padding: "8px 12px", fontWeight: 600, color: "#1e3a5f", maxWidth: 160 }}>{li.name}</td>
               <td style={{ padding: "8px 12px", color: "#7aa3c0", fontSize: 10, maxWidth: 260, lineHeight: 1.4 }}>{li.spec}</td>
-              <td style={{ padding: "8px 12px", textAlign: "right", color: "#1e3a5f", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(li.unitPrice)}</td>
+              <td style={{ padding: "8px 12px", textAlign: "right", color: "#1e3a5f", fontFamily: "'JetBrains Mono',monospace" }}>{formatMoney(li.unitPrice, quote.currency)}</td>
               <td style={{ padding: "8px 12px", textAlign: "right", fontWeight: 700, fontFamily: "'JetBrains Mono',monospace", color: "#1e3a5f" }}>{li.qty}</td>
-              <td style={{ padding: "8px 12px", textAlign: "right", fontWeight: 700, color: "#1e40af", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(li.total)}</td>
+              <td style={{ padding: "8px 12px", textAlign: "right", fontWeight: 700, color: "#1e40af", fontFamily: "'JetBrains Mono',monospace" }}>{formatMoney(li.total, quote.currency)}</td>
             </tr>))}</tbody>
           </table>
 
           <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 24 }}>
             <div style={{ minWidth: 320 }}>
-              {[["Servers Subtotal", serverTotal], ["Infrastructure Subtotal", infraTotal], ["Total (excl. GST)", grandTotal], ["GST @ 18%", tax]].map(([l, v]) => (<div key={l} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid #e0e7ff" }}><span style={{ color: "#7aa3c0", fontSize: 12 }}>{l}</span><span style={{ fontWeight: 600, color: "#1e3a5f", fontSize: 12, fontFamily: "'JetBrains Mono',monospace" }}>{fmt(v)}</span></div>))}
+              {[
+                ["Servers Subtotal", fmt(serverTotal)],
+                ["Infrastructure Subtotal", fmt(infraTotal)],
+                [exclLbl, formatMoney(subtotal, quote.currency)],
+                ...(quote.taxRate > 0 ? [[taxLbl, formatMoney(taxAmt, quote.currency)]] : []),
+              ].map(([l, v]) => (
+                <div key={l} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid #e0e7ff" }}>
+                  <span style={{ color: "#7aa3c0", fontSize: 12 }}>{l}</span>
+                  <span style={{ fontWeight: 600, color: "#1e3a5f", fontSize: 12, fontFamily: "'JetBrains Mono',monospace" }}>{v}</span>
+                </div>
+              ))}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", background: "linear-gradient(135deg,#1e40af,#0369a1)", borderRadius: 10, marginTop: 10 }}>
                 <div>
                   <div style={{ color: "#93c5fd", fontWeight: 700, fontSize: 11, letterSpacing: 1 }}>GRAND TOTAL</div>
-                  <div style={{ color: "#bfdbfe", fontSize: 10, marginTop: 2 }}>incl. 18% GST</div>
+                  <div style={{ color: "#bfdbfe", fontSize: 10, marginTop: 2 }}>{quote.currency}{quote.taxRate > 0 ? ` · ${quote.taxLabel} ${quote.taxRate}%` : ""}</div>
                 </div>
-                <span style={{ color: "#ffffff", fontWeight: 800, fontSize: 22, fontFamily: "'JetBrains Mono',monospace" }}>{fmt(total)}</span>
+                <span style={{ color: "#ffffff", fontWeight: 800, fontSize: 22, fontFamily: "'JetBrains Mono',monospace" }}>{formatMoney(totalAmt, quote.currency)}</span>
               </div>
             </div>
           </div>
 
           <div style={{ marginTop: 22, padding: 14, background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: "#1e40af", marginBottom: 6 }}>Terms & Conditions</div>
-            {["Prices are indicative in USD; confirmed upon Purchase Order issuance.", "Lead time: 4–10 weeks based on model and component availability.", "OEM warranty applies as specified; extended support per selected option.", "Payment: 30% advance, 60% on delivery, 10% on acceptance.", "BOQ validity: 30 days from date of issue.", "OEM network recommendations are best-practice guidance; final selection subject to site survey."].map((t, i) => (<div key={i} style={{ fontSize: 10, color: "#3b82f6", marginBottom: 3, display: "flex", gap: 6 }}><span>•</span>{t}</div>))}
+            {[`Prices in ${quote.currency} (USD catalogue × FX ${quote.fxRate}); confirmed upon Purchase Order issuance.`, "Lead time: 4–10 weeks based on model and component availability.", "OEM warranty applies as specified; extended support per selected option.", "Payment: 30% advance, 60% on delivery, 10% on acceptance.", "BOQ validity: 30 days from date of issue.", "OEM network recommendations are best-practice guidance; final selection subject to site survey."].map((t, i) => (<div key={i} style={{ fontSize: 10, color: "#3b82f6", marginBottom: 3, display: "flex", gap: 6 }}><span>•</span>{t}</div>))}
           </div>
           <div style={{ marginTop: 28, paddingTop: 16, borderTop: "2px solid #e0e7ff", display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
             <div style={{ fontSize: 10, color: "#93c5fd", fontFamily: "'JetBrains Mono',monospace" }}><div>Sniper Presales v9 · {refNo}</div><div>{today}</div></div>
@@ -1096,6 +1123,7 @@ function AIScreen({ onBack, onResult }) {
 }
 
 function AIResultPanel({ result, fmt, onRerun }) {
+  const { settings, totalsFromUsd } = useQuoteMoney();
   if (!result) return (
     <div className="boq-ai-empty">
       <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--boq-ink-soft)" }}>No generated BOQ yet</div>
@@ -1110,9 +1138,10 @@ function AIResultPanel({ result, fmt, onRerun }) {
     { key: "monitoring", label: "Monitoring", code: "MON" },
     { key: "database", label: "Database", code: "DB" },
   ];
-  let grandTotal = 0;
-  cats.forEach(c => { (result[c.key] || []).forEach(i => { grandTotal += i.unitPrice * i.qty; }); });
-  const gst = grandTotal * 0.18;
+  let grandTotalUsd = 0;
+  cats.forEach(c => { (result[c.key] || []).forEach(i => { grandTotalUsd += i.unitPrice * i.qty; }); });
+  const { subtotal, tax, total } = totalsFromUsd(grandTotalUsd);
+  const taxLbl = taxLineLabel(settings.taxLabel, settings.taxRate);
   return (
     <div>
       <div className="boq-panel-toolbar">
@@ -1159,12 +1188,14 @@ function AIResultPanel({ result, fmt, onRerun }) {
       })}
       <div className="boq-ai-total-bar">
         <div>
-          <div className="boq-ai-total-label">GST @ 18%: {fmt(gst)}</div>
-          <div className="boq-ai-total-label">Total incl. GST: {fmt(grandTotal + gst)}</div>
+          {settings.taxRate > 0 && (
+            <div className="boq-ai-total-label">{taxLbl}: {formatMoney(tax, settings.currency)}</div>
+          )}
+          <div className="boq-ai-total-label">{totalInclTaxLabel(settings.taxLabel, settings.taxRate)}: {formatMoney(total, settings.currency)}</div>
         </div>
         <div style={{ textAlign: "right" }}>
-          <div className="boq-ai-total-label">Grand total (excl. GST)</div>
-          <div className="boq-ai-total-value">{fmt(grandTotal)}</div>
+          <div className="boq-ai-total-label">{settings.taxRate > 0 ? `Subtotal (excl. ${settings.taxLabel})` : "Subtotal"}</div>
+          <div className="boq-ai-total-value">{formatMoney(subtotal, settings.currency)}</div>
         </div>
       </div>
     </div>
