@@ -3,11 +3,11 @@ import { formatMoney } from "../utils/currency";
 /** Sidebar / BOQ layer order (Servers tab is separate, always first). */
 export const INFRA_CATEGORY_ORDER = [
   "vmware",
-  "storage",
   "rack",
   "power",
   "network",
   "database",
+  "storage",
   "backup",
   "licenses",
   "monitoring",

@@ -435,11 +435,31 @@ function Configurator() {
   }
 
   const tabCode = (key: string) => {
+    if (key === "vmware") return "HV";
     if (key === "servers") return "SRV";
+    if (key === "rack") return "RCK";
+    if (key === "power") return "PWR";
+    if (key === "network") return "NET";
+    if (key === "database") return "DB";
+    if (key === "storage") return "STG";
+    if (key === "backup") return "BKP";
+    if (key === "licenses") return "LIC";
+    if (key === "monitoring") return "MON";
     if (key === "ai-result") return "AI";
     return key.slice(0, 3).toUpperCase();
   };
-  const TABS = [{ key: "servers", label: "Servers" }, ...infraCatalogueEntries().map(([k, v]) => ({ key: k, label: v.label })), { key: "ai-result", label: "AI BOQ" }];
+  const LAYER_TABS = [
+    { key: "vmware", label: INFRA_CATALOGUE.vmware.label },
+    { key: "servers", label: "Servers" },
+    { key: "rack", label: INFRA_CATALOGUE.rack.label },
+    { key: "power", label: INFRA_CATALOGUE.power.label },
+    { key: "network", label: INFRA_CATALOGUE.network.label },
+    { key: "database", label: INFRA_CATALOGUE.database.label },
+    { key: "storage", label: INFRA_CATALOGUE.storage.label },
+    { key: "backup", label: INFRA_CATALOGUE.backup.label },
+    { key: "licenses", label: INFRA_CATALOGUE.licenses.label },
+    { key: "monitoring", label: INFRA_CATALOGUE.monitoring.label },
+  ] as const;
 
   return (
     <div className="boq-app">
@@ -470,8 +490,10 @@ function Configurator() {
         <aside className="boq-sidebar">
           <p className="boq-label" style={{ marginBottom: "0.5rem" }}>Infrastructure Layers</p>
           <nav className="boq-nav-tabs">
-            {TABS.map(t => {
-              const hasRec = t.key === "servers" ? (serverConfigs.length > 0) : t.key === "ai-result" ? !!aiBoqResult : (infraSelections[t.key] && Object.keys(infraSelections[t.key]).length > 0);
+            {LAYER_TABS.map(t => {
+              const hasRec = t.key === "servers"
+                ? (serverConfigs.length > 0)
+                : (infraSelections[t.key] && Object.keys(infraSelections[t.key]).length > 0);
               const isActive = (tab || "servers") === t.key;
               return (
                 <button key={t.key} type="button" onClick={() => navigate(`/segments/${segmentId}/${t.key}`)} className={`boq-nav-tab${isActive ? " boq-nav-tab-active" : ""}`} >
@@ -482,6 +504,27 @@ function Configurator() {
               );
             })}
           </nav>
+
+          <div className="boq-nav-cutout">
+            <div className="boq-nav-cutout-label">AI BOQ</div>
+            <button
+              type="button"
+              onClick={() => navigate(`/segments/${segmentId}/ai-result`)}
+              className={`boq-nav-tab boq-nav-tab-ai${(tab || "servers") === "ai-result" ? " boq-nav-tab-active" : ""}`}
+            >
+              <span className="boq-nav-tab-code">{tabCode("ai-result")}</span>
+              <span className="boq-nav-tab-label">Generated BOQ</span>
+              {!!aiBoqResult && <span className="boq-nav-dot" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/ai")}
+              className="boq-btn boq-btn-primary boq-btn-lg"
+              style={{ marginTop: "0.65rem" }}
+            >
+              Run requirements engine
+            </button>
+          </div>
         </aside>
         <main className="boq-main boq-fade" key={activeTab}>
           {activeTab === "ai-result"

@@ -867,6 +867,33 @@ body {
   border-bottom: none;
 }
 
+.boq-nav-cutout {
+  margin-top: 0.85rem;
+  padding: 0.85rem;
+  border-radius: var(--boq-radius);
+  background: var(--boq-paper-bright);
+  border: 1px dashed var(--boq-rule-dark);
+}
+
+.boq-nav-cutout-label {
+  font-family: var(--boq-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--boq-ink-muted);
+  margin-bottom: 0.55rem;
+}
+
+.boq-nav-tab-ai {
+  border: 1px solid var(--boq-rule);
+  border-radius: var(--boq-radius-sm);
+}
+
+.boq-nav-cutout .boq-nav-tab + .boq-nav-tab {
+  margin-top: 0.45rem;
+}
+
 .boq-nav-tab:hover {
   background: var(--boq-paper-hover);
   color: var(--boq-ink);
