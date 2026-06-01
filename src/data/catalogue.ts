@@ -46,11 +46,38 @@ const INFRA_CATALOGUE_DATA = {
     {id:"net-pa-panorama",  name:"Palo Alto Panorama (Central Mgmt)",  brand:"paloalto",spec:"Centralised policy, log mgmt, up to 5000 devices",   unitPrice:16000},
   ]},
   storage:{label:"Storage",icon:"💾",color:"#059669",items:[
-    {id:"sto-san-af",name:"All-Flash SAN Array",spec:"200TB raw, 4x16Gbps FC, <0.2ms latency",unitPrice:95000},
-    {id:"sto-san-hybrid",name:"Hybrid SAN Array",spec:"400TB raw, SSD+HDD, 4x16Gbps FC",unitPrice:55000},
-    {id:"sto-nas",name:"NAS Appliance",spec:"200TB usable, SMB/NFS/iSCSI, 25G",unitPrice:28000},
-    {id:"sto-obj",name:"Object Storage Node",spec:"500TB raw, S3-compatible, erasure coding",unitPrice:38000},
-    {id:"sto-tape",name:"Tape Library LTO-9",spec:"LTO-9, 18TB/cartridge, 200-slot",unitPrice:42000},
+    // Dell — PowerStore, Unity, PowerScale, ECS
+    {id:"sto-dell-ps500t",name:"Dell PowerStore 500T (All-Flash)",brand:"dell",spec:"2U, NVMe, 25G iSCSI/FC/NVMe-oF, AppsON, dedup, <0.15ms",unitPrice:72000},
+    {id:"sto-dell-ps9200",name:"Dell PowerStore 9200 (All-Flash)",brand:"dell",spec:"4U, scale-out cluster, 32G FC, 100/25G Ethernet, mission-critical",unitPrice:118000},
+    {id:"sto-dell-ps1200",name:"Dell PowerStore 1200 (Hybrid)",brand:"dell",spec:"2U, NVMe cache + SAS, intelligent tiering, mid-size DC",unitPrice:58000},
+    {id:"sto-san-af",name:"Dell PowerStore 9200 All-Flash SAN",brand:"dell",spec:"200TB raw equiv., 4x32G FC, <0.2ms, HA dual-controller",unitPrice:95000},
+    {id:"sto-dell-unity480f",name:"Dell Unity XT 480F",brand:"dell",spec:"2U AF, 480TB max, unified block/file, 25G iSCSI, Unisphere",unitPrice:68000},
+    {id:"sto-dell-unity680h",name:"Dell Unity XT 680 Hybrid",brand:"dell",spec:"2U hybrid flash, file/block, snapshot replication, DR-ready",unitPrice:52000},
+    {id:"sto-dell-powerscale-f210",name:"Dell PowerScale F210 (NAS)",brand:"dell",spec:"4-node min, OneFS, SMB/NFS/S3, 25G, scale-out NAS",unitPrice:42000},
+    {id:"sto-dell-powerscale-h700",name:"Dell PowerScale H700 (Hybrid NAS)",brand:"dell",spec:"Hybrid node, archive + active tier, multi-protocol, analytics",unitPrice:38000},
+    {id:"sto-nas",name:"Dell PowerScale F210 NAS Appliance",brand:"dell",spec:"200TB usable, SMB/NFS/S3, 25G, snapshot replication",unitPrice:28000},
+    {id:"sto-dell-ecs-ex500",name:"Dell ECS EX500 (Object)",brand:"dell",spec:"Scale-out object, S3/Swift, geo-distributed, erasure coding",unitPrice:45000},
+    {id:"sto-obj",name:"Dell ECS EX500 Object Storage",brand:"dell",spec:"500TB raw, S3-compatible, multi-site, compliance lock",unitPrice:38000},
+    {id:"sto-dell-me5024",name:"Dell PowerVault ME5024 (Entry SAN)",brand:"dell",spec:"2U, 24-bay, iSCSI 25G, entry SAN / ROBO, snapshot",unitPrice:22000},
+    // HPE — Alletra, MSA, StoreEasy, StoreEver
+    {id:"sto-hp-alletra6000",name:"HPE Alletra 6000 (All-Flash)",brand:"hp",spec:"Nimble AF, 23TB+ effective, 100GbE/32G FC, InfoSight AI ops",unitPrice:78000},
+    {id:"sto-hp-alletra9000",name:"HPE Alletra 9000",brand:"hp",spec:"Mission-critical AF, 99.9999% availability, 32G FC, NVMe",unitPrice:145000},
+    {id:"sto-hp-alletra5000",name:"HPE Alletra 5000 (Hybrid)",brand:"hp",spec:"Adaptive flash cache, block primary storage, cloud-ready",unitPrice:62000},
+    {id:"sto-san-hybrid",name:"HPE Alletra 5000 Hybrid SAN",brand:"hp",spec:"400TB raw, SSD+HDD tiers, 4x16G FC, peer persistence",unitPrice:55000},
+    {id:"sto-hp-msa2060",name:"HPE MSA 2060 SAN",brand:"hp",spec:"2U, 24-SFF, iSCSI/FC/SAS, entry/mid SAN, 99.999% uptime",unitPrice:28000},
+    {id:"sto-hp-msa2064",name:"HPE MSA 2064 Flash Bundle",brand:"hp",spec:"MSA 2060 + AF drives, 32G FC option, Veeam-ready snapshots",unitPrice:42000},
+    {id:"sto-hp-storeeasy1660",name:"HPE StoreEasy 1660 NAS",brand:"hp",spec:"4U, 60-bay, SMB/NFS, storage federation, antivirus ready",unitPrice:32000},
+    {id:"sto-hp-cray-e1000",name:"HPE Cray ClusterStor E1000",brand:"hp",spec:"HPC parallel file, Lustre, 200GB/s+ aggregate, AI/HPC",unitPrice:185000},
+    {id:"sto-tape",name:"HPE StoreEver MSL3040 (LTO-9)",brand:"hp",spec:"LTO-9, 18TB/cartridge, 40-slot base, encryption, WORM",unitPrice:42000},
+    {id:"sto-hp-storeever-msl6480",name:"HPE StoreEver MSL6480 Tape Library",brand:"hp",spec:"LTO-9, 6480 slots max, enterprise archive, FC/SAS",unitPrice:95000},
+    // Lenovo — ThinkSystem DM / DE / DG
+    {id:"sto-len-dm5100f",name:"Lenovo ThinkSystem DM5100F (All-Flash)",brand:"lenovo",spec:"2U, NVMe, 32G FC/25G iSCSI, HA pairs, ThinkSystem DM OS",unitPrice:74000},
+    {id:"sto-len-dm7100f",name:"Lenovo ThinkSystem DM7100F",brand:"lenovo",spec:"4U scale-out AF, 1.5PB max, sync/async replication",unitPrice:112000},
+    {id:"sto-len-de4000h",name:"Lenovo ThinkSystem DE4000H (Hybrid)",brand:"lenovo",spec:"2U12 hybrid, entry SAN, Dynamic Disk Pools, 12Gb SAS",unitPrice:38000},
+    {id:"sto-len-de6400",name:"Lenovo ThinkSystem DE6400 Expansion",brand:"lenovo",spec:"4U60 expansion shelf, 12Gb SAS, pairs with DM series",unitPrice:24000},
+    {id:"sto-len-dg5200",name:"Lenovo ThinkSystem DG5200 (Unified)",brand:"lenovo",spec:"Block+file+object gateway, scale-out, S3/NFS/iSCSI",unitPrice:52000},
+    {id:"sto-len-hs350x",name:"Lenovo ThinkSystem HS350X NAS",brand:"lenovo",spec:"2U, 12-bay, SMB/NFS, Active Directory, backup target",unitPrice:18000},
+    {id:"sto-len-truscale",name:"Lenovo TruScale Storage (STaaS)",brand:"lenovo",spec:"Consumption-based capacity, on-prem cloud model, 3yr min",unitPrice:15000},
   ]},
   backup:{label:"Backup",icon:"🔒",color:"#d97706",items:[
     {id:"bkp-sw-ent",name:"Backup Software Enterprise",spec:"Veeam/Commvault, unlimited workloads",unitPrice:28000},
@@ -133,8 +160,14 @@ export const INFRA_CATALOGUE = Object.fromEntries(
 export const infraCatalogueEntries = () =>
   INFRA_CATEGORY_ORDER.map((key) => [key, INFRA_CATALOGUE[key]] as const);
 
-export const BRAND_COLORS: Record<string, string> = {cisco:"#1ba0d7",juniper:"#84ba27",aruba:"#f96c1b",fortinet:"#e7222e",f5:"#e5002b",paloalto:"#fa582d"};
-export const BRAND_LABELS: Record<string, string> = {cisco:"CISCO",juniper:"JUNIPER",aruba:"ARUBA",fortinet:"FORTINET",f5:"F5",paloalto:"PALO ALTO"};
+export const BRAND_COLORS: Record<string, string> = {
+  cisco:"#1ba0d7",juniper:"#84ba27",aruba:"#f96c1b",fortinet:"#e7222e",f5:"#e5002b",paloalto:"#fa582d",
+  dell:"#007DB8",hp:"#01A982",lenovo:"#E2231A",
+};
+export const BRAND_LABELS: Record<string, string> = {
+  cisco:"CISCO",juniper:"JUNIPER",aruba:"ARUBA",fortinet:"FORTINET",f5:"F5",paloalto:"PALO ALTO",
+  dell:"DELL",hp:"HPE",lenovo:"LENOVO",
+};
 
 /** Format USD catalogue amounts (use useQuoteMoney().fmt in UI when quote currency applies). */
 export const fmt = (n: number) => formatMoney(n, "USD");

@@ -53,7 +53,7 @@ export default function HomePage() {
             />
           </div>
           <div>
-            <div className="boq-brand-title">Sniper Presales</div>
+            <div className="boq-brand-title">Sniper Presales Tool</div>
             <div className="boq-brand-sub">Bill of Quantity · Rev 9</div>
           </div>
         </div>

@@ -469,7 +469,7 @@ function Configurator() {
             <img src="/logo.png" alt="Sniper Presales Logo" className="boq-logo" />
           </div>
           <div>
-            <div className="boq-brand-title">Sniper Presales</div>
+            <div className="boq-brand-title">Sniper Presales Tool</div>
             <div className="boq-brand-sub">BOQ Configurator · v9</div>
           </div>
           {seg && <span className="boq-badge">{seg.icon} {seg.label}</span>}
@@ -735,6 +735,11 @@ function InfraPanel({ cat, categoryKey, selections, updateQty, rec, seg, fmt }) 
   const isHypervisor = cat.label === "Hypervisor / Virtualisation";
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [brandFilter, setBrandFilter] = useState("all");
+
+  useEffect(() => {
+    setBrandFilter("all");
+    setSelectedVendor(null);
+  }, [categoryKey]);
 
   // For hypervisor tab: vendor-grouped view
   if (isHypervisor) {
