@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import { BRAND_COLORS, BRAND_LABELS, INFRA_CATEGORY_ORDER } from "./data/catalogue";
+import { callGroq, parseBoqJson } from "./lib/groq";
 import { Icon } from "./components/Icons";
 import { SEGMENTS } from "./data/segments";
 import { useAppData, type ServerBrandsData, type ServerOptionsData } from "./hooks/useAppData";
@@ -1237,36 +1238,50 @@ function AIScreen({ onBack, onResult }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const chips = [{ label: "Retail", v: "Retail" }, { label: "Healthcare", v: "Healthcare" }, { label: "BFSI", v: "BFSI / Banking" }, { label: "Education", v: "Education" }, { label: "Manufacturing", v: "Manufacturing" }, { label: "HPC / AI", v: "Research / HPC / AI" }, { label: "Gaming", v: "Gaming" }, { label: "Transport", v: "Transport" }, { label: "SMB", v: "SMB" }, { label: "Design / VFX", v: "Design / VFX" }];
+  const SYSTEM_PROMPT = `You are a senior datacentre architect and presales engineer.
+Generate detailed Bills of Quantities (BOQ) for enterprise data centre infrastructure.
+Always respond with valid JSON only — no markdown, no code fences, no extra text.
+Use realistic USD pricing. Include 3-6 items per category scaled to customer needs.`;
+
+  const buildUserPrompt = () =>
+    `Generate a detailed BOQ in strict JSON.
+
+REQUIREMENTS:
+${req}
+
+Scale: ${scale}
+Budget: ${budget}
+Compliance: ${compliance}
+Redundancy: ${redundancy}${chip ? `\nSegment: ${chip}` : ""}
+
+Return exactly this JSON shape:
+{
+  "summary": "2-3 sentence overview",
+  "segment": "segment name",
+  "compute": [{"item":"name","spec":"brief spec","qty":1,"unitPrice":5000,"reason":"why for this customer"}],
+  "storage": [{"item":"name","spec":"brief spec","qty":1,"unitPrice":5000,"reason":"why"}],
+  "network": [{"item":"name","spec":"brief spec","qty":1,"unitPrice":5000,"reason":"why"}],
+  "backup": [{"item":"name","spec":"brief spec","qty":1,"unitPrice":5000,"reason":"why"}],
+  "monitoring": [{"item":"name","spec":"brief spec","qty":1,"unitPrice":5000,"reason":"why"}],
+  "sql_database": [{"item":"name","spec":"brief spec","qty":1,"unitPrice":5000,"reason":"why"}],
+  "nosql_database": [{"item":"name","spec":"brief spec","qty":1,"unitPrice":5000,"reason":"why"}]
+}
+
+Rules: realistic USD prices, respect compliance requirements, scale hardware to stated user count and budget.`;
+
   const generate = async () => {
     if (!req.trim()) { setError("Please describe your requirements."); return; }
     setError(""); setLoading(true);
     try {
-      const res = await fetch("https://boq-production.up.railway.app/api/generate-boq", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requirements: req, scale, budget, compliance, redundancy, segment: chip || undefined }),
+      const raw = await callGroq({
+        systemPrompt: SYSTEM_PROMPT,
+        userPrompt: buildUserPrompt(),
+        maxTokens: 4096,
       });
-
-      // Check if response has content before parsing
-      const text = await res.text();
-      console.log("Raw response:", text);
-      console.log("Status:", res.status);
-
-      if (!text) {
-        throw new Error(`Server returned empty response (HTTP ${res.status}). Check Railway logs.`);
-      }
-
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        throw new Error(`Invalid JSON from server: ${text.slice(0, 200)}`);
-      }
-
-      if (!res.ok) throw new Error(data.error || "Failed to generate BOQ");
-      onResult(data.boq);
+      const boq = parseBoqJson(raw);
+      onResult(boq);
     } catch (e) {
-      setError(e.message || "Failed to generate BOQ. Please try again.");
+      setError((e as Error).message || "Failed to generate BOQ. Please try again.");
     }
     setLoading(false);
   };

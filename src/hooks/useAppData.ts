@@ -1,4 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import segmentRecommendationsData from "../../data/segment-recommendations.json";
+import serverBrandsData from "../../data/server-brands.json";
+import serverOptionsData from "../../data/server-options.json";
 
 export type CpuOption = {
   id: string;
@@ -53,61 +56,26 @@ export type SegmentRec = {
 export type SegmentRecommendationsData = Record<string, SegmentRec>;
 
 /**
- * Fetches segment recommendations, server brands, and server options
- * in parallel from the API. Exposes loading and error state.
+ * Returns bundled JSON data directly — no network calls.
+ * All three data files are imported at build time.
  */
 export function useAppData() {
-  const [segmentRecommendations, setSegmentRecommendations] =
-    useState<SegmentRecommendationsData | null>(null);
-  const [serverBrands, setServerBrands] = useState<ServerBrandsData | null>(null);
-  const [serverOptions, setServerOptions] = useState<ServerOptionsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [segRes, brandsRes, optionsRes] = await Promise.all([
-        fetch("/api/segment-recommendations"),
-        fetch("/api/server-brands"),
-        fetch("/api/server-options"),
-      ]);
-
-      if (!segRes.ok) throw new Error(`segment-recommendations: HTTP ${segRes.status}`);
-      if (!brandsRes.ok) throw new Error(`server-brands: HTTP ${brandsRes.status}`);
-      if (!optionsRes.ok) throw new Error(`server-options: HTTP ${optionsRes.status}`);
-
-      const [seg, brands, options] = await Promise.all([
-        segRes.json(),
-        brandsRes.json(),
-        optionsRes.json(),
-      ]);
-
-      setSegmentRecommendations(seg);
-      setServerBrands(brands);
-      setServerOptions(options);
-    } catch (err) {
-      console.error("[useAppData] Fetch failed:", err);
-      setError(err instanceof Error ? err.message : String(err));
-      setSegmentRecommendations(null);
-      setServerBrands(null);
-      setServerOptions(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+  const [segmentRecommendations] = useState<SegmentRecommendationsData>(
+    segmentRecommendationsData as SegmentRecommendationsData
+  );
+  const [serverBrands] = useState<ServerBrandsData>(
+    serverBrandsData as ServerBrandsData
+  );
+  const [serverOptions] = useState<ServerOptionsData>(
+    serverOptionsData as ServerOptionsData
+  );
 
   return {
     segmentRecommendations,
     serverBrands,
     serverOptions,
-    loading,
-    error,
-    refetch: fetchAll,
+    loading: false,
+    error: null,
+    refetch: () => {},
   };
 }

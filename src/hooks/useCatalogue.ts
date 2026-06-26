@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
+import catalogueData from "../../data/catalogue.json";
 
 export type CatalogueItem = {
   id: string;
@@ -28,36 +29,11 @@ export type CatalogueData = {
 };
 
 /**
- * Hook to fetch and manage the dynamic catalogue from the API.
- * Falls back to an empty structure if the API is unavailable.
+ * Returns the bundled catalogue JSON directly — no network call needed.
+ * The data is imported at build time from data/catalogue.json.
  */
 export function useCatalogue() {
-  const [catalogue, setCatalogue] = useState<CatalogueData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchCatalogue = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/catalogue");
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-      }
-      const data = await res.json();
-      setCatalogue(data);
-    } catch (err) {
-      console.error("[useCatalogue] Fetch failed:", err);
-      setError(err instanceof Error ? err.message : String(err));
-      setCatalogue(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCatalogue();
-  }, [fetchCatalogue]);
+  const [catalogue] = useState<CatalogueData>(catalogueData as CatalogueData);
 
   // Helper: find a product by category + id
   const findProduct = useCallback(
@@ -92,9 +68,10 @@ export function useCatalogue() {
 
   return {
     catalogue,
-    loading,
-    error,
-    refetch: fetchCatalogue,
+    loading: false,
+    error: null,
+    // refetch is a no-op on Vercel — data is bundled at build time
+    refetch: () => {},
     findProduct,
     getAllProducts,
   };

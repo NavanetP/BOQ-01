@@ -8,6 +8,11 @@ import { INFRA_CATEGORY_ORDER } from "../data/catalogue";
 import { SEGMENTS } from "../data/segments";
 import { Icon } from "../components/Icons";
 
+// Data refresh (catalogue/refresh and refresh-all) requires the local
+// Express server (server.js) running — it writes back to JSON files on disk.
+// On Vercel (static deploy) these buttons are intentionally disabled.
+const IS_LOCAL_SERVER = import.meta.env.DEV;
+
 export default function HomePage() {
   const { isAuthenticated, login, logout, user } = useAuth();
   const { catalogue, loading, error, refetch } = useCatalogue();
@@ -21,6 +26,10 @@ export default function HomePage() {
   const totalItems = catalogueEntries.reduce((a, [, cat]) => a + cat.items.length, 0);
 
   const handleRefreshPrices = async () => {
+    if (!IS_LOCAL_SERVER) {
+      alert("Price refresh requires the local dev server.\nRun: npm run dev — then use this button at http://localhost:5173");
+      return;
+    }
     if (!window.confirm(
       "Refresh all catalogue prices using AI?\n\nThis queries Groq with current market context and updates all 125 SKU prices. Takes about 1–2 minutes."
     )) return;
@@ -49,6 +58,10 @@ export default function HomePage() {
   const [fullRefreshResult, setFullRefreshResult] = useState<{ success: boolean; message: string; detail?: string } | null>(null);
 
   const handleFullRefresh = async () => {
+    if (!IS_LOCAL_SERVER) {
+      alert("Full product refresh requires the local dev server.\nRun: npm run dev — then use this button at http://localhost:5173");
+      return;
+    }
     if (!window.confirm(
       "Update ALL product data from AI?\n\n" +
       "This will refresh:\n" +
@@ -170,7 +183,7 @@ export default function HomePage() {
             type="button"
             onClick={handleFullRefresh}
             disabled={fullRefreshing}
-            title="Fetch current 2025–2026 market data for all products, servers, CPUs, and GPUs"
+            title={IS_LOCAL_SERVER ? "Fetch current 2025–2026 market data for all products, servers, CPUs, and GPUs" : "Only available when running locally (requires server.js to write files)"}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -186,13 +199,13 @@ export default function HomePage() {
               letterSpacing: "0.07em",
               textTransform: "uppercase",
               cursor: fullRefreshing ? "not-allowed" : "pointer",
-              opacity: fullRefreshing ? 0.8 : 1,
+              opacity: fullRefreshing ? 0.8 : IS_LOCAL_SERVER ? 1 : 0.45,
               whiteSpace: "nowrap",
               transition: "all 0.15s",
             }}
           >
             <Icon name="refresh" size={11} className={fullRefreshing ? "boq-spin" : ""} />
-            {fullRefreshing ? "Updating..." : "Update All Products"}
+            {fullRefreshing ? "Updating..." : IS_LOCAL_SERVER ? "Update All Products" : "Update All (local only)"}
           </button>
         </div>
       </header>
@@ -338,7 +351,7 @@ export default function HomePage() {
                 type="button"
                 onClick={handleRefreshPrices}
                 disabled={refreshing || !catalogue}
-                title="Use AI to refresh market prices for all catalogue items"
+                title={IS_LOCAL_SERVER ? "Use AI to refresh market prices for all catalogue items" : "Only available when running locally (requires server.js to write files)"}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -355,13 +368,13 @@ export default function HomePage() {
                   textTransform: "uppercase",
                   cursor: refreshing || !catalogue ? "not-allowed" : "pointer",
                   transition: "all 0.15s",
-                  opacity: refreshing || !catalogue ? 0.6 : 1,
+                  opacity: refreshing || !catalogue ? 0.6 : IS_LOCAL_SERVER ? 1 : 0.45,
                   whiteSpace: "nowrap",
                   flexShrink: 0,
                 }}
               >
                 <Icon name={refreshing ? "refresh" : "sparkles"} size={10} className={refreshing ? "boq-spin" : ""} />
-                {refreshing ? "Refreshing..." : "Refresh Prices"}
+                {refreshing ? "Refreshing..." : IS_LOCAL_SERVER ? "Refresh Prices" : "Refresh (local only)"}
               </button>
             </h2>
 
