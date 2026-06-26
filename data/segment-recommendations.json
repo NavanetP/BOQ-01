@@ -1,0 +1,1396 @@
+{
+  "retail": {
+    "rationale": "Retail environments need reliable mid-tier servers for POS and e-commerce with HA storage, fast backups, and strong monitoring during peak seasons.",
+    "servers": {
+      "brand": "dell",
+      "series": "PowerEdge R-Series (Rack)",
+      "modelId": "dell-r650",
+      "cpuType": "intel",
+      "cpuId": "xeon-gold-5415",
+      "cpuCount": 2,
+      "ramId": "ram-128",
+      "storageId": "sto-2x960",
+      "nicId": "nic-10g-2p",
+      "gpuId": "gpu-none",
+      "osId": "os-win-std",
+      "supportId": "sup-3y-nbd",
+      "psuId": "psu-redundant",
+      "qty": 4,
+      "reason": "PowerEdge R650 balances cost and performance for POS/inventory workloads. 4 nodes for HA."
+    },
+    "network": {
+      "items": [
+        "net-cisco-c9300",
+        "net-forti-fg1100e",
+        "net-f5-ltm"
+      ],
+      "reasons": {
+        "net-cisco-c9300": "Cisco Catalyst 9300 for POS and store access switching — DNA centre for visibility",
+        "net-forti-fg1100e": "FortiGate 1100E NGFW for PCI-DSS payment network compliance and anti-malware",
+        "net-f5-ltm": "F5 BIG-IP LTM for e-commerce web tier load balancing and session persistence"
+      }
+    },
+    "storage": {
+      "items": [
+        "sto-san-hybrid",
+        "sto-nas"
+      ],
+      "reasons": {
+        "sto-san-hybrid": "Hybrid SAN for mixed workloads — hot data on SSD, cold on HDD",
+        "sto-nas": "NAS for shared product catalogue, media assets, and backups"
+      }
+    },
+    "backup": {
+      "items": [
+        "bkp-sw-ent",
+        "bkp-appl"
+      ],
+      "reasons": {
+        "bkp-sw-ent": "Enterprise backup software for daily RPO/RTO compliance",
+        "bkp-appl": "Appliance with dedup for efficient retail transaction data backup"
+      }
+    },
+    "monitoring": {
+      "items": [
+        "mon-sw",
+        "mon-apm",
+        "mon-netflow",
+        "mon-db"
+      ],
+      "reasons": {
+        "mon-sw": "Infrastructure monitoring for server/network health and uptime",
+        "mon-apm": "APM to monitor e-commerce app performance during peak seasons",
+        "mon-netflow": "Network flow analysis to detect POS traffic anomalies",
+        "mon-db": "Database performance monitoring for SQL Server POS transaction bottlenecks"
+      }
+    },
+    "database": {
+      "items": [
+        "db-mssql",
+        "db-mysql-ent"
+      ],
+      "reasons": {
+        "db-mssql": "SQL Server for POS transactions and inventory management",
+        "db-mysql-ent": "MySQL for e-commerce product catalogue and web backend"
+      }
+    },
+    "vmware": {
+      "items": [
+        "vm-vsphere",
+        "vm-vcenter",
+        "hv-hyperv",
+        "hv-scvmm"
+      ],
+      "reasons": {
+        "vm-vsphere": "vSphere for retail server consolidation and live migration",
+        "vm-vcenter": "vCenter for centralised VM lifecycle management",
+        "hv-hyperv": "Hyper-V free with Windows Server DC — cost-effective for POS virtualisation",
+        "hv-scvmm": "SCVMM for fabric-level management of Hyper-V hosts across stores"
+      }
+    },
+    "licenses": {
+      "items": [
+        "lic-win-srv",
+        "lic-antivirus"
+      ],
+      "reasons": {
+        "lic-win-srv": "Windows Server Datacenter for unlimited VMs on each host",
+        "lic-antivirus": "Endpoint protection for POS terminals and servers"
+      }
+    },
+    "power": {
+      "items": [
+        "pwr-ups-10k",
+        "pwr-pdu-smart",
+        "pwr-crac"
+      ],
+      "reasons": {
+        "pwr-ups-10k": "10kVA UPS per rack pair for power continuity",
+        "pwr-pdu-smart": "Smart PDU for per-outlet metering and remote control",
+        "pwr-crac": "CRAC unit to maintain 20-22C for reliable POS operation"
+      }
+    },
+    "rack": {
+      "items": [
+        "rack-42u",
+        "rack-cable-mgr",
+        "rack-kvm",
+        "rack-install"
+      ],
+      "reasons": {
+        "rack-42u": "42U rack for 4 servers + network + patch panels",
+        "rack-cable-mgr": "Structured cabling for neat, maintainable layout",
+        "rack-kvm": "16-port KVM for out-of-band server management",
+        "rack-install": "Professional integration with labeling and documentation"
+      }
+    }
+  },
+  "education": {
+    "rationale": "Education needs scalable VDI for students, GPU for research labs, shared storage, and strong monitoring to support thousands of concurrent users.",
+    "servers": {
+      "brand": "dell",
+      "series": "PowerEdge R-Series (Rack)",
+      "modelId": "dell-r750",
+      "cpuType": "intel",
+      "cpuId": "xeon-gold-6338",
+      "cpuCount": 2,
+      "ramId": "ram-256",
+      "storageId": "sto-4x1920",
+      "nicId": "nic-25g-2p",
+      "gpuId": "gpu-t4",
+      "osId": "os-rhel",
+      "supportId": "sup-3y-4hr",
+      "psuId": "psu-redundant",
+      "qty": 6,
+      "reason": "R750 2U with T4 GPU supports VDI and research workloads. 6 nodes for student concurrency."
+    },
+    "network": {
+      "items": [
+        "net-aruba-6300",
+        "net-aruba-8360",
+        "net-forti-fg1100e",
+        "net-f5-ltm"
+      ],
+      "reasons": {
+        "net-aruba-6300": "Aruba CX 6300 PoE+ access switches for student labs and WiFi APs — AI Insights for campus ops",
+        "net-aruba-8360": "Aruba CX 8360 25G aggregation with VSX for inter-VLAN and storage fabric",
+        "net-forti-fg1100e": "FortiGate 1100E with web filtering and content inspection for campus AUP compliance",
+        "net-f5-ltm": "F5 BIG-IP LTM for LMS and student portal load balancing during peak exam seasons"
+      }
+    },
+    "storage": {
+      "items": [
+        "sto-san-af",
+        "sto-nas",
+        "sto-obj"
+      ],
+      "reasons": {
+        "sto-san-af": "All-Flash SAN for VDI boot and user profile performance",
+        "sto-nas": "NAS for shared home drives, coursework, and lab files",
+        "sto-obj": "Object storage for lecture recordings and media archives"
+      }
+    },
+    "backup": {
+      "items": [
+        "bkp-sw-ent",
+        "bkp-appl",
+        "bkp-cloud-gw"
+      ],
+      "reasons": {
+        "bkp-sw-ent": "Enterprise backup for LMS databases and VDI gold images",
+        "bkp-appl": "Dedup appliance for efficient daily backups of student data",
+        "bkp-cloud-gw": "Cloud gateway for long-term academic archive offload"
+      }
+    },
+    "monitoring": {
+      "items": [
+        "mon-sw",
+        "mon-apm",
+        "mon-dcim",
+        "mon-netflow"
+      ],
+      "reasons": {
+        "mon-sw": "Infrastructure monitoring across campus server estate",
+        "mon-apm": "APM for LMS performance during exam and enrollment peaks",
+        "mon-dcim": "DCIM for data center energy efficiency and capacity planning",
+        "mon-netflow": "Flow analysis for campus network traffic shaping"
+      }
+    },
+    "database": {
+      "items": [
+        "db-mssql",
+        "db-pg-sub"
+      ],
+      "reasons": {
+        "db-mssql": "SQL Server for student information and LMS backends",
+        "db-pg-sub": "PostgreSQL for open-source research and lab databases"
+      }
+    },
+    "vmware": {
+      "items": [
+        "vm-vsphere",
+        "vm-vcenter",
+        "vm-vsan",
+        "vm-horizon",
+        "hv-ocp",
+        "hv-proxmox"
+      ],
+      "reasons": {
+        "vm-vsphere": "vSphere for VDI host consolidation",
+        "vm-vcenter": "vCenter for centralised campus VM management",
+        "vm-vsan": "vSAN for hyper-converged student desktop storage",
+        "vm-horizon": "VMware Horizon for student virtual desktop delivery",
+        "hv-ocp": "Red Hat OpenShift for research Kubernetes workloads and CI/CD labs",
+        "hv-proxmox": "Proxmox VE for low-cost student lab virtualisation clusters"
+      }
+    },
+    "licenses": {
+      "items": [
+        "lic-win-srv",
+        "lic-rhel",
+        "lic-antivirus",
+        "lic-citrix"
+      ],
+      "reasons": {
+        "lic-win-srv": "Windows Server for AD, file, and print services",
+        "lic-rhel": "RHEL for research and lab Linux workloads",
+        "lic-antivirus": "Endpoint protection for lab desktops and servers",
+        "lic-citrix": "Citrix for application delivery to thin clients"
+      }
+    },
+    "power": {
+      "items": [
+        "pwr-ups-10k",
+        "pwr-pdu-smart",
+        "pwr-crac"
+      ],
+      "reasons": {
+        "pwr-ups-10k": "Modular UPS for each rack with N+1 redundancy",
+        "pwr-pdu-smart": "Smart PDU for energy consumption tracking and budget reporting",
+        "pwr-crac": "Precision cooling for dense VDI server clusters"
+      }
+    },
+    "rack": {
+      "items": [
+        "rack-42u",
+        "rack-cable-mgr",
+        "rack-kvm",
+        "rack-install",
+        "rack-amc"
+      ],
+      "reasons": {
+        "rack-42u": "42U racks for 6 servers with storage and network",
+        "rack-cable-mgr": "Color-coded structured cabling by VLAN/function",
+        "rack-kvm": "KVM for remote lab administration",
+        "rack-install": "Professional rack integration with full documentation",
+        "rack-amc": "Annual maintenance contract for campus DC support"
+      }
+    }
+  },
+  "healthcare": {
+    "rationale": "Healthcare requires mission-critical HA, HIPAA compliance, high RAM for PACS imaging, encrypted storage, immutable backups, and 5-year 24x7 support.",
+    "servers": {
+      "brand": "hp",
+      "series": "ProLiant DL-Series (Rack)",
+      "modelId": "hp-dl580g11",
+      "cpuType": "intel",
+      "cpuId": "xeon-plat-8360",
+      "cpuCount": 2,
+      "ramId": "ram-512",
+      "storageId": "sto-8x3840nvme",
+      "nicId": "nic-25g-4p",
+      "gpuId": "gpu-a10",
+      "osId": "os-win-dc",
+      "supportId": "sup-5y-247",
+      "psuId": "psu-titanium",
+      "qty": 4,
+      "reason": "DL580 Gen11 provides 4-socket scalability for PACS. 512GB RAM, A10 GPU for AI diagnostics, 5yr 24x7."
+    },
+    "network": {
+      "items": [
+        "net-cisco-n9k-tor",
+        "net-cisco-n9k-spine",
+        "net-pa-pa5250",
+        "net-f5-best",
+        "net-cisco-asr1k"
+      ],
+      "reasons": {
+        "net-cisco-n9k-tor": "Cisco Nexus 9300 ToR for PACS imaging traffic — VXLAN/ACI for clinical VLAN microsegmentation",
+        "net-cisco-n9k-spine": "Cisco Nexus 9500 spine for non-blocking 100G PACS and EHR storage fabric",
+        "net-pa-pa5250": "Palo Alto PA-5250 NGFW — App-ID and WildFire sandbox mandatory for HIPAA network security",
+        "net-f5-best": "F5 BIG-IP i5800 ADC for EHR application HA, SSL offload, and session persistence",
+        "net-cisco-asr1k": "Cisco ASR 1001-X for MPLS WAN interconnect between hospital sites and DR"
+      }
+    },
+    "storage": {
+      "items": [
+        "sto-san-af",
+        "sto-nas",
+        "sto-tape"
+      ],
+      "reasons": {
+        "sto-san-af": "All-Flash SAN for sub-ms PACS image retrieval",
+        "sto-nas": "NAS for clinical document management and DICOM archive",
+        "sto-tape": "LTO-9 tape for 7-year HIPAA-compliant long-term archival"
+      }
+    },
+    "backup": {
+      "items": [
+        "bkp-sw-ent",
+        "bkp-appl",
+        "bkp-immutable",
+        "bkp-cloud-gw"
+      ],
+      "reasons": {
+        "bkp-sw-ent": "Veeam/Commvault for EHR/PACS backup orchestration",
+        "bkp-appl": "Inline dedup appliance for fast clinical data backup",
+        "bkp-immutable": "Immutable WORM repository for ransomware protection - HIPAA mandatory",
+        "bkp-cloud-gw": "Cloud backup for geo-redundant DR of patient records"
+      }
+    },
+    "monitoring": {
+      "items": [
+        "mon-sw",
+        "mon-apm",
+        "mon-dcim",
+        "mon-siem",
+        "mon-db"
+      ],
+      "reasons": {
+        "mon-sw": "24x7 infrastructure monitoring for clinical uptime",
+        "mon-apm": "APM for EHR response time SLA compliance",
+        "mon-dcim": "DCIM for power and cooling in HIPAA-controlled environment",
+        "mon-siem": "SIEM for HIPAA audit logs, access monitoring, and threat detection",
+        "mon-db": "Database performance monitoring for Oracle EHR and SQL Server"
+      }
+    },
+    "database": {
+      "items": [
+        "db-orcl",
+        "db-mssql"
+      ],
+      "reasons": {
+        "db-orcl": "Oracle DB Enterprise for mission-critical EHR platforms (Epic/Cerner)",
+        "db-mssql": "SQL Server for clinical analytics and reporting databases"
+      }
+    },
+    "vmware": {
+      "items": [
+        "vm-vsphere",
+        "vm-vcenter",
+        "vm-vsan",
+        "vm-nsx",
+        "vm-vrops",
+        "hv-nutanix-aos",
+        "hv-nutanix-prism"
+      ],
+      "reasons": {
+        "vm-vsphere": "vSphere Enterprise+ for clinical VM consolidation",
+        "vm-vcenter": "vCenter for unified hospital VM management",
+        "vm-vsan": "vSAN for all-flash HCI storage for EHR",
+        "vm-nsx": "NSX micro-segmentation for HIPAA network isolation",
+        "vm-vrops": "vROps for capacity planning and compliance reporting",
+        "hv-nutanix-aos": "Nutanix AOS for HCI nodes running PACS imaging — AHV included",
+        "hv-nutanix-prism": "Nutanix Prism Pro for AI-driven ops and capacity analytics on HCI"
+      }
+    },
+    "licenses": {
+      "items": [
+        "lic-win-srv",
+        "lic-rhel",
+        "lic-antivirus"
+      ],
+      "reasons": {
+        "lic-win-srv": "Windows Server DC for AD, PACS clients, and EHR servers",
+        "lic-rhel": "RHEL for clinical Linux workloads and database servers",
+        "lic-antivirus": "Endpoint protection - mandatory for HIPAA compliance"
+      }
+    },
+    "power": {
+      "items": [
+        "pwr-ups-80k",
+        "pwr-pdu-smart",
+        "pwr-crac",
+        "pwr-gen"
+      ],
+      "reasons": {
+        "pwr-ups-80k": "80kVA 3-phase UPS - life-critical systems need no power interruption",
+        "pwr-pdu-smart": "Smart PDU with per-outlet metering for compliance reporting",
+        "pwr-crac": "Precision CRAC with N+1 redundancy for 24x7 clinical operation",
+        "pwr-gen": "Diesel generator for multi-day power outage resilience"
+      }
+    },
+    "rack": {
+      "items": [
+        "rack-42u",
+        "rack-cable-mgr",
+        "rack-kvm",
+        "rack-install",
+        "rack-amc"
+      ],
+      "reasons": {
+        "rack-42u": "42U racks with full security panels for HIPAA physical compliance",
+        "rack-cable-mgr": "Color-coded cabling with HIPAA asset tracking labels",
+        "rack-kvm": "IP KVM for secure out-of-band management",
+        "rack-install": "Certified integration with HIPAA-compliant documentation",
+        "rack-amc": "5yr AMC aligned with server support contract"
+      }
+    }
+  },
+  "bfsi": {
+    "rationale": "BFSI demands zero-downtime mission-critical infrastructure, low-latency 100G networking for trading, encrypted immutable storage, and full SIEM for regulatory compliance.",
+    "servers": {
+      "brand": "dell",
+      "series": "PowerEdge R-Series (Rack)",
+      "modelId": "dell-r960",
+      "cpuType": "intel",
+      "cpuId": "xeon-plat-8592",
+      "cpuCount": 2,
+      "ramId": "ram-768",
+      "storageId": "sto-8x3840nvme",
+      "nicId": "nic-100g-4p",
+      "gpuId": "gpu-a30",
+      "osId": "os-rhel",
+      "supportId": "sup-5y-247",
+      "psuId": "psu-titanium",
+      "qty": 6,
+      "reason": "R960 for core banking - Platinum 8592+ for max throughput, 768GB RAM, 4x100G for algo trading latency."
+    },
+    "network": {
+      "items": [
+        "net-cisco-n9k-tor",
+        "net-cisco-n9k-spine",
+        "net-pa-pa5250",
+        "net-f5-best",
+        "net-f5-gtm",
+        "net-cisco-asr1k"
+      ],
+      "reasons": {
+        "net-cisco-n9k-tor": "Cisco Nexus 9300 for 10/25G banking app server access — ACI policy for PCI-DSS zones",
+        "net-cisco-n9k-spine": "Cisco Nexus 9500 non-blocking 100G spine for algo trading and core banking latency",
+        "net-pa-pa5250": "Palo Alto PA-5250 NGFW — Panorama managed, WildFire sandbox, RBI/SEBI audit logs",
+        "net-f5-best": "F5 BIG-IP i5800 ADC for internet banking SSL offload and transactional HA",
+        "net-f5-gtm": "F5 BIG-IP DNS/GSLB for active-active DC failover and geo-redundant banking portals",
+        "net-cisco-asr1k": "Cisco ASR 1001-X with MPLS for DC-to-DC interconnect and RBI-mandated DR link"
+      }
+    },
+    "storage": {
+      "items": [
+        "sto-san-af",
+        "sto-obj",
+        "sto-tape"
+      ],
+      "reasons": {
+        "sto-san-af": "All-Flash SAN with <0.2ms latency for core banking OLTP",
+        "sto-obj": "Object storage for regulatory document archive and audit trails",
+        "sto-tape": "LTO-9 tape for 10-year RBI/SEBI mandatory records retention"
+      }
+    },
+    "backup": {
+      "items": [
+        "bkp-sw-ent",
+        "bkp-appl",
+        "bkp-immutable",
+        "bkp-cloud-gw"
+      ],
+      "reasons": {
+        "bkp-sw-ent": "Enterprise backup for core banking, CBS, and treasury apps",
+        "bkp-appl": "Inline dedup for efficient backup of large financial datasets",
+        "bkp-immutable": "WORM immutable backup - mandatory for RBI circular compliance",
+        "bkp-cloud-gw": "Cloud gateway for geo-redundant DR with RTO < 2 hours"
+      }
+    },
+    "monitoring": {
+      "items": [
+        "mon-sw",
+        "mon-apm",
+        "mon-dcim",
+        "mon-siem",
+        "mon-db",
+        "mon-aio"
+      ],
+      "reasons": {
+        "mon-sw": "24x7 monitoring with automated alerting for zero-downtime SLA",
+        "mon-apm": "APM for transaction response time monitoring (SLA < 200ms)",
+        "mon-dcim": "DCIM for power chain visibility in regulated DC environment",
+        "mon-siem": "SIEM mandatory for RBI/PCI-DSS security audit and log management",
+        "mon-db": "DB performance monitor for Oracle RAC core banking query latency",
+        "mon-aio": "Full-stack observability for unified trading platform telemetry"
+      }
+    },
+    "database": {
+      "items": [
+        "db-orcl",
+        "db-mssql",
+        "db-nosql"
+      ],
+      "reasons": {
+        "db-orcl": "Oracle RAC for core banking, CBS, and trading platforms",
+        "db-mssql": "SQL Server for MIS, reporting, and analytics workloads",
+        "db-nosql": "MongoDB for fraud detection real-time event streaming"
+      }
+    },
+    "vmware": {
+      "items": [
+        "vm-vsphere",
+        "vm-vcenter",
+        "vm-vsan",
+        "vm-nsx",
+        "vm-vrops",
+        "hv-ocp",
+        "hv-oracle-vm",
+        "hv-nutanix-aos"
+      ],
+      "reasons": {
+        "vm-vsphere": "vSphere Enterprise+ for banking workload HA and DRS",
+        "vm-vcenter": "vCenter for multi-site financial DC management",
+        "vm-vsan": "vSAN stretched cluster for metro-level active-active storage",
+        "vm-nsx": "NSX mandatory for PCI-DSS micro-segmentation of cardholder data",
+        "vm-vrops": "vROps for capacity planning and ITIL-aligned change management",
+        "hv-ocp": "Red Hat OpenShift for containerised microservices banking APIs and fintech workloads",
+        "hv-oracle-vm": "Oracle VM Server for Oracle DB RAC hosting — certified, zero licensing uplift",
+        "hv-nutanix-aos": "Nutanix HCI for DR site — AHV hypervisor with simple failover"
+      }
+    },
+    "licenses": {
+      "items": [
+        "lic-win-srv",
+        "lic-rhel",
+        "lic-antivirus"
+      ],
+      "reasons": {
+        "lic-win-srv": "Windows Server DC for AD, WSUS, and Windows-based banking apps",
+        "lic-rhel": "RHEL for core banking servers - certified by Oracle and IBM",
+        "lic-antivirus": "CrowdStrike/Symantec - PCI-DSS requirement for all endpoints"
+      }
+    },
+    "power": {
+      "items": [
+        "pwr-ups-80k",
+        "pwr-pdu-smart",
+        "pwr-crac",
+        "pwr-gen"
+      ],
+      "reasons": {
+        "pwr-ups-80k": "80kVA 3-phase online UPS - no tolerance for power interruption in CBS",
+        "pwr-pdu-smart": "Smart PDU with dual-feed for A+B power path redundancy",
+        "pwr-crac": "N+2 CRAC units - banking DCs run 24x7x365",
+        "pwr-gen": "500kVA generator for extended grid outage - RBI DC guidelines mandate this"
+      }
+    },
+    "rack": {
+      "items": [
+        "rack-42u",
+        "rack-cable-mgr",
+        "rack-kvm",
+        "rack-install",
+        "rack-amc"
+      ],
+      "reasons": {
+        "rack-42u": "Heavy-duty 42U racks with locks for PCI-DSS physical security",
+        "rack-cable-mgr": "Dual structured cable management for A+B path separation",
+        "rack-kvm": "Secure IP KVM for audit-logged out-of-band access",
+        "rack-install": "Bank-certified integration with full VAPT documentation",
+        "rack-amc": "5yr premium AMC with guaranteed 4-hour SLA and spare parts depot"
+      }
+    }
+  },
+  "transport": {
+    "rationale": "Transport needs edge-capable servers for IoT ingestion, GPU for real-time analytics, redundant networking, and reliable 3-year support contracts.",
+    "servers": {
+      "brand": "lenovo",
+      "series": "ThinkSystem SR-Series (Rack)",
+      "modelId": "len-sr650v3",
+      "cpuType": "intel",
+      "cpuId": "xeon-gold-6338",
+      "cpuCount": 2,
+      "ramId": "ram-256",
+      "storageId": "sto-4x1920",
+      "nicId": "nic-25g-2p",
+      "gpuId": "gpu-t4",
+      "osId": "os-rhel",
+      "supportId": "sup-3y-4hr",
+      "psuId": "psu-redundant",
+      "qty": 4,
+      "reason": "SR650 V3 with T4 GPU for real-time fleet analytics. 4 nodes across 2 sites for HA."
+    },
+    "network": {
+      "items": [
+        "net-cisco-c9300",
+        "net-forti-fg1100e",
+        "net-forti-sd-wan",
+        "net-cisco-asr1k"
+      ],
+      "reasons": {
+        "net-cisco-c9300": "Cisco Catalyst 9300 at depot and hub sites — IoT device profiling via DNA Centre",
+        "net-forti-fg1100e": "FortiGate 1100E NGFW to secure IoT gateway traffic and fleet management APIs",
+        "net-forti-sd-wan": "Fortinet SD-WAN for cost-effective multi-site WAN with application-aware routing",
+        "net-cisco-asr1k": "Cisco ASR 1001-X as hub router for MPLS/SD-WAN connectivity across transport network"
+      }
+    },
+    "storage": {
+      "items": [
+        "sto-san-hybrid",
+        "sto-nas",
+        "sto-obj"
+      ],
+      "reasons": {
+        "sto-san-hybrid": "Hybrid SAN for mixed hot/warm fleet data workloads",
+        "sto-nas": "NAS for route planning, schedule files, and shared operational data",
+        "sto-obj": "Object storage for GPS telemetry, video surveillance, and logs archive"
+      }
+    },
+    "backup": {
+      "items": [
+        "bkp-sw-ent",
+        "bkp-appl",
+        "bkp-cloud-gw"
+      ],
+      "reasons": {
+        "bkp-sw-ent": "Backup software for fleet management and operational databases",
+        "bkp-appl": "Dedup appliance for daily backup of telemetry and transaction data",
+        "bkp-cloud-gw": "Cloud backup for IoT data lake and long-term archive"
+      }
+    },
+    "monitoring": {
+      "items": [
+        "mon-sw",
+        "mon-apm",
+        "mon-dcim",
+        "mon-netflow"
+      ],
+      "reasons": {
+        "mon-sw": "Infrastructure monitoring for DC and edge nodes",
+        "mon-apm": "APM for fleet management platform performance",
+        "mon-dcim": "DCIM for remote DC facilities in transport hubs",
+        "mon-netflow": "Network flow analysis for IoT device traffic patterns and WAN bandwidth"
+      }
+    },
+    "database": {
+      "items": [
+        "db-pg-sub",
+        "db-nosql"
+      ],
+      "reasons": {
+        "db-pg-sub": "PostgreSQL for fleet scheduling, routing, and transaction records",
+        "db-nosql": "MongoDB for real-time IoT event streams and telemetry data"
+      }
+    },
+    "vmware": {
+      "items": [
+        "vm-vsphere",
+        "vm-vcenter",
+        "vm-vsan",
+        "hv-nutanix-aos",
+        "hv-azstack"
+      ],
+      "reasons": {
+        "vm-vsphere": "vSphere for server consolidation across depot sites",
+        "vm-vcenter": "vCenter for multi-site VM management",
+        "vm-vsan": "vSAN for hyper-converged edge nodes at depots",
+        "hv-nutanix-aos": "Nutanix HCI at remote depots — simple, ruggedised, single-vendor",
+        "hv-azstack": "Azure Stack HCI for edge sites needing hybrid cloud connectivity to Azure IoT"
+      }
+    },
+    "licenses": {
+      "items": [
+        "lic-rhel",
+        "lic-antivirus"
+      ],
+      "reasons": {
+        "lic-rhel": "RHEL for IoT gateway and edge analytics servers",
+        "lic-antivirus": "Endpoint protection for transport management terminals"
+      }
+    },
+    "power": {
+      "items": [
+        "pwr-ups-10k",
+        "pwr-pdu-smart",
+        "pwr-crac",
+        "pwr-gen"
+      ],
+      "reasons": {
+        "pwr-ups-10k": "10kVA modular UPS per rack",
+        "pwr-pdu-smart": "Smart PDU for remote power cycling of edge nodes",
+        "pwr-crac": "Precision cooling for transport hubs",
+        "pwr-gen": "Generator for depot edge DCs with unreliable grid"
+      }
+    },
+    "rack": {
+      "items": [
+        "rack-42u",
+        "rack-cable-mgr",
+        "rack-kvm",
+        "rack-install"
+      ],
+      "reasons": {
+        "rack-42u": "42U rack for transport hubs",
+        "rack-cable-mgr": "Structured cabling for operational maintainability",
+        "rack-kvm": "IP KVM for remote management of distributed nodes",
+        "rack-install": "Professional integration with network topology documentation"
+      }
+    }
+  },
+  "manufacturing": {
+    "rationale": "Manufacturing needs AMD EPYC for SAP HANA, SCADA isolation, industrial IoT integration, OT/IT separation via NSX, and 5-year support for production continuity.",
+    "servers": {
+      "brand": "lenovo",
+      "series": "ThinkSystem SR-Series (Rack)",
+      "modelId": "len-sr665v3",
+      "cpuType": "amd",
+      "cpuId": "epyc-9454",
+      "cpuCount": 2,
+      "ramId": "ram-384",
+      "storageId": "sto-4x1600nvme",
+      "nicId": "nic-25g-2p",
+      "gpuId": "gpu-a10",
+      "osId": "os-rhel",
+      "supportId": "sup-5y-4hr",
+      "psuId": "psu-redundant",
+      "qty": 6,
+      "reason": "SR665 V3 (AMD EPYC 9454) is SAP-HANA certified. A10 GPU for AI-driven predictive maintenance."
+    },
+    "network": {
+      "items": [
+        "net-cisco-n9k-tor",
+        "net-cisco-n9k-spine",
+        "net-pa-pa5250",
+        "net-cisco-asr1k"
+      ],
+      "reasons": {
+        "net-cisco-n9k-tor": "Cisco Nexus 9300 ToR for SCADA, MES, and SAP HANA server connectivity — OT/IT zoning",
+        "net-cisco-n9k-spine": "Cisco Nexus 9500 100G spine for SAP HANA replication and production storage fabric",
+        "net-pa-pa5250": "Palo Alto PA-5250 NGFW for OT/IT micro-segmentation — ICS/SCADA threat prevention signatures",
+        "net-cisco-asr1k": "Cisco ASR 1001-X for plant-to-plant MPLS WAN and ERP connectivity"
+      }
+    },
+    "storage": {
+      "items": [
+        "sto-san-af",
+        "sto-nas",
+        "sto-obj"
+      ],
+      "reasons": {
+        "sto-san-af": "All-Flash SAN for SAP HANA in-memory database persistence",
+        "sto-nas": "NAS for CAD files, production docs, and quality records",
+        "sto-obj": "Object storage for sensor telemetry, IoT data lake"
+      }
+    },
+    "backup": {
+      "items": [
+        "bkp-sw-ent",
+        "bkp-appl",
+        "bkp-immutable"
+      ],
+      "reasons": {
+        "bkp-sw-ent": "Backup for SAP HANA, MES, and production databases",
+        "bkp-appl": "Dedup appliance for efficient backup of large ERP datasets",
+        "bkp-immutable": "Immutable backup for audit trail and compliance archival"
+      }
+    },
+    "monitoring": {
+      "items": [
+        "mon-sw",
+        "mon-apm",
+        "mon-dcim",
+        "mon-siem",
+        "mon-db"
+      ],
+      "reasons": {
+        "mon-sw": "OT/IT infrastructure monitoring with SCADA integration",
+        "mon-apm": "APM for SAP and MES application performance",
+        "mon-dcim": "DCIM for industrial DC with power and environmental monitoring",
+        "mon-siem": "SIEM for ICS security monitoring and incident response",
+        "mon-db": "DB performance monitor for SAP HANA and Oracle ERP"
+      }
+    },
+    "database": {
+      "items": [
+        "db-orcl",
+        "db-mssql",
+        "db-nosql"
+      ],
+      "reasons": {
+        "db-orcl": "Oracle DB for manufacturing ERP and supply chain platforms",
+        "db-mssql": "SQL Server for MES, quality management, and plant reporting",
+        "db-nosql": "MongoDB for IoT sensor data streams and predictive analytics"
+      }
+    },
+    "vmware": {
+      "items": [
+        "vm-vsphere",
+        "vm-vcenter",
+        "vm-vsan",
+        "vm-nsx",
+        "hv-ocp",
+        "hv-nutanix-aos"
+      ],
+      "reasons": {
+        "vm-vsphere": "vSphere for production server consolidation",
+        "vm-vcenter": "vCenter for multi-plant DC management",
+        "vm-vsan": "vSAN for SCADA and MES hyper-converged nodes",
+        "vm-nsx": "NSX for OT/IT micro-segmentation - critical for ICS security",
+        "hv-ocp": "OpenShift for containerised MES and IIoT analytics microservices",
+        "hv-nutanix-aos": "Nutanix HCI at factory floor edge — AHV hypervisor, simple management"
+      }
+    },
+    "licenses": {
+      "items": [
+        "lic-rhel",
+        "lic-suse",
+        "lic-win-srv",
+        "lic-antivirus"
+      ],
+      "reasons": {
+        "lic-rhel": "RHEL - certified platform for SAP HANA and Oracle DB",
+        "lic-suse": "SUSE Linux Enterprise - SAP preferred OS for HANA",
+        "lic-win-srv": "Windows Server for MES clients and SCADA HMIs",
+        "lic-antivirus": "Industrial-hardened endpoint protection for OT systems"
+      }
+    },
+    "power": {
+      "items": [
+        "pwr-ups-80k",
+        "pwr-pdu-smart",
+        "pwr-crac",
+        "pwr-gen"
+      ],
+      "reasons": {
+        "pwr-ups-80k": "80kVA online UPS - production stoppage is unacceptable",
+        "pwr-pdu-smart": "Smart PDU for plant DC energy auditing",
+        "pwr-crac": "Precision cooling for industrial DCs",
+        "pwr-gen": "Generator for production continuity during grid maintenance"
+      }
+    },
+    "rack": {
+      "items": [
+        "rack-42u",
+        "rack-cable-mgr",
+        "rack-kvm",
+        "rack-install",
+        "rack-amc"
+      ],
+      "reasons": {
+        "rack-42u": "42U racks with IP-rated doors for industrial environment",
+        "rack-cable-mgr": "Color-coded cabling by plant system (SAP/SCADA/MES)",
+        "rack-kvm": "IP KVM for remote SCADA server access",
+        "rack-install": "Certified SAP-HANA infrastructure integration",
+        "rack-amc": "5yr AMC - production DCs need guaranteed 4hr SLA"
+      }
+    }
+  },
+  "research": {
+    "rationale": "HPC/Research needs maximum GPU density, 100G fabric for MPI, TB-scale NVMe, parallel file systems, and specialized high-density rack builds.",
+    "servers": {
+      "brand": "dell",
+      "series": "PowerEdge XE-Series (High Density/GPU)",
+      "modelId": "dell-xe8545",
+      "cpuType": "amd",
+      "cpuId": "epyc-9654",
+      "cpuCount": 2,
+      "ramId": "ram-1024",
+      "storageId": "sto-8x3840nvme",
+      "nicId": "nic-100g-4p",
+      "gpuId": "gpu-h100-80",
+      "osId": "os-rhel",
+      "supportId": "sup-5y-4hr",
+      "psuId": "psu-titanium",
+      "qty": 8,
+      "reason": "XE8545 with 4xA100/H100 GPUs is the gold standard for AI training clusters. AMD EPYC 9654 (96 cores) for HPC."
+    },
+    "network": {
+      "items": [
+        "net-jun-qfx10k",
+        "net-jun-qfx5120",
+        "net-jun-mx204"
+      ],
+      "reasons": {
+        "net-jun-qfx10k": "Juniper QFX10008 non-blocking spine — 160Tbps for MPI all-reduce and RDMA over converged fabric",
+        "net-jun-qfx5120": "Juniper QFX5120 25G/100G ToR for GPU compute node connectivity and storage fabric",
+        "net-jun-mx204": "Juniper MX204 core router for internet2/national research network and BGP peering"
+      }
+    },
+    "storage": {
+      "items": [
+        "sto-san-af",
+        "sto-obj",
+        "sto-nas"
+      ],
+      "reasons": {
+        "sto-san-af": "All-Flash SAN for checkpoint storage and dataset staging",
+        "sto-obj": "Object storage (Ceph/MinIO) for S3-compatible research data lake",
+        "sto-nas": "Parallel NAS (GPFS/Lustre) for shared /scratch and /home"
+      }
+    },
+    "backup": {
+      "items": [
+        "bkp-sw-ent",
+        "bkp-appl",
+        "bkp-immutable",
+        "bkp-cloud-gw"
+      ],
+      "reasons": {
+        "bkp-sw-ent": "Backup for simulation results, trained models, and datasets",
+        "bkp-appl": "High-throughput backup appliance for TB-scale checkpoint files",
+        "bkp-immutable": "Immutable storage for published research data - grant compliance",
+        "bkp-cloud-gw": "Cloud tier for cold research archive (AWS Glacier/Azure Cool)"
+      }
+    },
+    "monitoring": {
+      "items": [
+        "mon-sw",
+        "mon-apm",
+        "mon-dcim",
+        "mon-gpu"
+      ],
+      "reasons": {
+        "mon-sw": "HPC cluster monitoring with GPU utilization metrics",
+        "mon-apm": "Job scheduler and MPI performance profiling",
+        "mon-dcim": "DCIM critical for high-density GPU rack power and thermal management",
+        "mon-gpu": "NVIDIA DCGM GPU telemetry - track GPU utilization, temperature, memory bandwidth, and ECC errors across the cluster"
+      }
+    },
+    "database": {
+      "items": [
+        "db-pg-sub",
+        "db-nosql"
+      ],
+      "reasons": {
+        "db-pg-sub": "PostgreSQL for experiment metadata, results tracking, and lab notebooks",
+        "db-nosql": "MongoDB for unstructured research data and genomics pipelines"
+      }
+    },
+    "vmware": {
+      "items": [
+        "vm-vsphere",
+        "vm-vcenter",
+        "vm-vrops",
+        "hv-ocp",
+        "hv-ocp-storage",
+        "hv-proxmox"
+      ],
+      "reasons": {
+        "vm-vsphere": "vSphere for management VMs and interactive research nodes",
+        "vm-vcenter": "vCenter for cluster lifecycle and resource management",
+        "vm-vrops": "vROps for GPU and CPU utilization analytics and chargeback",
+        "hv-ocp": "Red Hat OpenShift for AI/ML pipelines, Jupyter hubs, and model serving",
+        "hv-ocp-storage": "OpenShift Data Foundation (Ceph) for S3-compatible research data lake on OpenShift",
+        "hv-proxmox": "Proxmox VE for cost-effective lab and dev cluster virtualisation alongside HPC"
+      }
+    },
+    "licenses": {
+      "items": [
+        "lic-rhel",
+        "lic-antivirus"
+      ],
+      "reasons": {
+        "lic-rhel": "RHEL - required for HPC middleware (Slurm, OpenMPI, CUDA drivers)",
+        "lic-antivirus": "Endpoint protection for cluster login nodes and storage servers"
+      }
+    },
+    "power": {
+      "items": [
+        "pwr-ups-80k",
+        "pwr-pdu-smart",
+        "pwr-crac",
+        "pwr-gen"
+      ],
+      "reasons": {
+        "pwr-ups-80k": "80kVA UPS - GPU cluster racks consume 20-30kW each",
+        "pwr-pdu-smart": "Smart PDU with per-outlet monitoring for GPU node power measurement",
+        "pwr-crac": "High-capacity CRAC - GPU servers generate extreme heat loads",
+        "pwr-gen": "Generator for running multi-week training jobs through grid events"
+      }
+    },
+    "rack": {
+      "items": [
+        "rack-42u",
+        "rack-cable-mgr",
+        "rack-kvm",
+        "rack-install",
+        "rack-amc"
+      ],
+      "reasons": {
+        "rack-42u": "42U high-density racks with enhanced airflow for GPU servers",
+        "rack-cable-mgr": "High-density cable management for 100G DAC/fiber bundles",
+        "rack-kvm": "IP KVM for cluster node console access during training jobs",
+        "rack-install": "HPC-certified integration with fabric and storage cabling",
+        "rack-amc": "5yr AMC to protect research investment in GPU infrastructure"
+      }
+    }
+  },
+  "smb": {
+    "rationale": "SMB needs cost-effective, easy-to-manage infrastructure with integrated backup, basic monitoring, and simple virtualization - minimal operational complexity.",
+    "servers": {
+      "brand": "dell",
+      "series": "PowerEdge R-Series (Rack)",
+      "modelId": "dell-r350",
+      "cpuType": "intel",
+      "cpuId": "xeon-silver-4314",
+      "cpuCount": 1,
+      "ramId": "ram-64",
+      "storageId": "sto-2x480",
+      "nicId": "nic-1g-2p",
+      "gpuId": "gpu-none",
+      "osId": "os-win-std",
+      "supportId": "sup-3y-nbd",
+      "psuId": "psu-single",
+      "qty": 2,
+      "reason": "R350 entry-level provides reliable SMB server at low cost. 2 nodes for basic redundancy."
+    },
+    "network": {
+      "items": [
+        "net-aruba-6300",
+        "net-forti-fg100f"
+      ],
+      "reasons": {
+        "net-aruba-6300": "Aruba CX 6300 managed PoE switch — right-sized for SMB servers, VoIP, and WiFi APs with zero-touch provisioning",
+        "net-forti-fg100f": "FortiGate 100F UTM firewall — all-in-one NGFW, SD-WAN, VPN, and web filtering ideal for SMB budget"
+      }
+    },
+    "storage": {
+      "items": [
+        "sto-nas"
+      ],
+      "reasons": {
+        "sto-nas": "NAS provides all SMB needs: file sharing, backup target, and simple iSCSI for VMs"
+      }
+    },
+    "backup": {
+      "items": [
+        "bkp-sw-ent",
+        "bkp-appl"
+      ],
+      "reasons": {
+        "bkp-sw-ent": "Backup software for business-critical data protection",
+        "bkp-appl": "Compact backup appliance with dedup for SMB budget"
+      }
+    },
+    "monitoring": {
+      "items": [
+        "mon-sw",
+        "mon-aio"
+      ],
+      "reasons": {
+        "mon-sw": "Basic infrastructure monitoring for proactive alerting on small team",
+        "mon-aio": "All-in-one observability replaces multiple point tools - cost-effective for SMB"
+      }
+    },
+    "database": {
+      "items": [
+        "db-mssql"
+      ],
+      "reasons": {
+        "db-mssql": "SQL Server Standard for SMB ERP, CRM, and accounting applications"
+      }
+    },
+    "vmware": {
+      "items": [
+        "vm-vsphere",
+        "vm-vcenter",
+        "hv-hyperv",
+        "hv-proxmox"
+      ],
+      "reasons": {
+        "vm-vsphere": "vSphere Essentials for SMB VM consolidation on 2 nodes",
+        "vm-vcenter": "vCenter Essentials for simple centralised management",
+        "hv-hyperv": "Hyper-V free with Windows Server — zero extra cost for SMB VMs",
+        "hv-proxmox": "Proxmox VE as budget-friendly alternative to vSphere for SMB KVM virtualisation"
+      }
+    },
+    "licenses": {
+      "items": [
+        "lic-win-srv",
+        "lic-antivirus"
+      ],
+      "reasons": {
+        "lic-win-srv": "Windows Server Standard for AD, DNS, DHCP, and file services",
+        "lic-antivirus": "Business endpoint protection for all servers and PCs"
+      }
+    },
+    "power": {
+      "items": [
+        "pwr-ups-10k",
+        "pwr-pdu-basic"
+      ],
+      "reasons": {
+        "pwr-ups-10k": "10kVA UPS for server room power protection",
+        "pwr-pdu-basic": "Basic PDU - cost-appropriate for SMB power distribution"
+      }
+    },
+    "rack": {
+      "items": [
+        "rack-42u",
+        "rack-install"
+      ],
+      "reasons": {
+        "rack-42u": "Single 42U rack sufficient for complete SMB infrastructure",
+        "rack-install": "Professional racking and cabling to ensure neat, maintainable setup"
+      }
+    }
+  },
+  "gaming": {
+    "rationale": "Gaming platforms need high-frequency CPUs, fast NVMe, high-bandwidth NICs for real-time multiplayer, GPU for AI NPCs, and strong DDoS-capable network security.",
+    "servers": {
+      "brand": "dell",
+      "series": "PowerEdge R-Series (Rack)",
+      "modelId": "dell-r750xa",
+      "cpuType": "intel",
+      "cpuId": "xeon-gold-6448",
+      "cpuCount": 2,
+      "ramId": "ram-256",
+      "storageId": "sto-4x1600nvme",
+      "nicId": "nic-25g-4p",
+      "gpuId": "gpu-a10",
+      "osId": "os-none",
+      "supportId": "sup-3y-4hr",
+      "psuId": "psu-redundant",
+      "qty": 8,
+      "reason": "R750xa with 4x25G NICs for game server sharding. A10 GPU for AI-driven NPC and anti-cheat ML models."
+    },
+    "network": {
+      "items": [
+        "net-cisco-n9k-tor",
+        "net-cisco-n9k-spine",
+        "net-forti-fg4200f",
+        "net-f5-best",
+        "net-f5-asm",
+        "net-cisco-asr1k"
+      ],
+      "reasons": {
+        "net-cisco-n9k-tor": "Cisco Nexus 9300 ToR for game server sharding and inter-node traffic",
+        "net-cisco-n9k-spine": "Cisco Nexus 9500 non-blocking 100G spine for matchmaking fabric",
+        "net-forti-fg4200f": "FortiGate 4200F with NP7 ASIC — 200Gbps DDoS mitigation and volumetric attack defence",
+        "net-f5-best": "F5 BIG-IP i5800 for game session ADC, matchmaking API load balancing, and SSL offload",
+        "net-f5-asm": "F5 Advanced WAF for API protection, bot detection, and game economy fraud prevention",
+        "net-cisco-asr1k": "Cisco ASR 1001-X with BGP for Anycast routing and global player latency optimisation"
+      }
+    },
+    "storage": {
+      "items": [
+        "sto-san-af",
+        "sto-obj"
+      ],
+      "reasons": {
+        "sto-san-af": "All-Flash SAN for game world state and player save data",
+        "sto-obj": "Object storage for game asset CDN, updates, and player replays"
+      }
+    },
+    "backup": {
+      "items": [
+        "bkp-sw-ent",
+        "bkp-appl",
+        "bkp-immutable"
+      ],
+      "reasons": {
+        "bkp-sw-ent": "Backup for player databases, economy, and world state",
+        "bkp-appl": "Rapid recovery appliance for game world rollback capability",
+        "bkp-immutable": "Immutable backup for player transaction records and anti-fraud"
+      }
+    },
+    "monitoring": {
+      "items": [
+        "mon-sw",
+        "mon-apm",
+        "mon-siem",
+        "mon-netflow",
+        "mon-aio"
+      ],
+      "reasons": {
+        "mon-sw": "Real-time server health monitoring for game uptime SLA",
+        "mon-apm": "Player experience monitoring - lag spikes directly impact retention",
+        "mon-siem": "SIEM for account security, bot detection, and exploit monitoring",
+        "mon-netflow": "Network flow analysis for DDoS early detection and player traffic profiling",
+        "mon-aio": "Full-stack observability for matchmaking, game servers, and CDN in a single pane of glass"
+      }
+    },
+    "database": {
+      "items": [
+        "db-mssql",
+        "db-nosql",
+        "db-pg-sub"
+      ],
+      "reasons": {
+        "db-mssql": "SQL Server for player accounts, billing, and in-game economy",
+        "db-nosql": "MongoDB/Redis for real-time leaderboards, sessions, and game state",
+        "db-pg-sub": "PostgreSQL for analytics, reporting, and player behavior data"
+      }
+    },
+    "vmware": {
+      "items": [
+        "vm-vsphere",
+        "vm-vcenter",
+        "vm-nsx",
+        "hv-ocp",
+        "hv-nutanix-aos"
+      ],
+      "reasons": {
+        "vm-vsphere": "vSphere for dev, test, and management server workloads",
+        "vm-vcenter": "vCenter for game platform VM lifecycle management",
+        "vm-nsx": "NSX micro-segmentation for isolated game server zones and DDoS containment",
+        "hv-ocp": "OpenShift for containerised game microservices, matchmaking APIs, and CI/CD pipelines",
+        "hv-nutanix-aos": "Nutanix HCI for game analytics and backend services with rapid horizontal scale"
+      }
+    },
+    "licenses": {
+      "items": [
+        "lic-win-srv",
+        "lic-antivirus"
+      ],
+      "reasons": {
+        "lic-win-srv": "Windows Server for game backend services and admin tools",
+        "lic-antivirus": "Endpoint protection for management and CI/CD infrastructure"
+      }
+    },
+    "power": {
+      "items": [
+        "pwr-ups-10k",
+        "pwr-pdu-smart",
+        "pwr-crac",
+        "pwr-gen"
+      ],
+      "reasons": {
+        "pwr-ups-10k": "Modular UPS per rack - game servers must not drop mid-match",
+        "pwr-pdu-smart": "Smart PDU for per-server power monitoring and density planning",
+        "pwr-crac": "Precision cooling for dense game server racks",
+        "pwr-gen": "Generator - gaming outages go viral; 99.99% uptime is business-critical"
+      }
+    },
+    "rack": {
+      "items": [
+        "rack-42u",
+        "rack-cable-mgr",
+        "rack-kvm",
+        "rack-install"
+      ],
+      "reasons": {
+        "rack-42u": "42U racks for 8 game servers with full cabling",
+        "rack-cable-mgr": "Color-coded cabling by game title/zone for operational clarity",
+        "rack-kvm": "IP KVM for rapid emergency server access during live incidents",
+        "rack-install": "Professional integration with network zone documentation"
+      }
+    }
+  },
+  "design": {
+    "rationale": "Design & Architecture needs professional GPU servers for rendering, high-bandwidth shared storage, NVIDIA-certified visualization platforms, and Windows DC for Citrix/VDI delivery.",
+    "servers": {
+      "brand": "dell",
+      "series": "PowerEdge XE-Series (High Density/GPU)",
+      "modelId": "dell-xe8545",
+      "cpuType": "intel",
+      "cpuId": "xeon-plat-8360",
+      "cpuCount": 2,
+      "ramId": "ram-512",
+      "storageId": "sto-4x1600nvme",
+      "nicId": "nic-100g-2p",
+      "gpuId": "gpu-l40s",
+      "osId": "os-win-dc",
+      "supportId": "sup-5y-4hr",
+      "psuId": "psu-titanium",
+      "qty": 4,
+      "reason": "XE8545 with NVIDIA L40S (48GB) is purpose-built for professional visualization, BIM rendering, and VFX workflows."
+    },
+    "network": {
+      "items": [
+        "net-jun-qfx5120",
+        "net-jun-qfx10k",
+        "net-f5-ltm",
+        "net-pa-pa820"
+      ],
+      "reasons": {
+        "net-jun-qfx5120": "Juniper QFX5120 25G/100G ToR for GPU-to-storage render fabric — low latency for large frame transfers",
+        "net-jun-qfx10k": "Juniper QFX10008 spine for high-bandwidth GPU cluster and NAS interconnect",
+        "net-f5-ltm": "F5 BIG-IP LTM for vGPU session delivery and Horizon/Citrix connection broker load balancing",
+        "net-pa-pa820": "Palo Alto PA-820 NGFW for IP protection of proprietary design assets and secure remote rendering access"
+      }
+    },
+    "storage": {
+      "items": [
+        "sto-san-af",
+        "sto-nas",
+        "sto-obj"
+      ],
+      "reasons": {
+        "sto-san-af": "All-Flash SAN for active project files and render farm scratch",
+        "sto-nas": "High-throughput NAS for shared project repositories",
+        "sto-obj": "Object storage for completed renders, archives, and asset libraries"
+      }
+    },
+    "backup": {
+      "items": [
+        "bkp-sw-ent",
+        "bkp-appl",
+        "bkp-cloud-gw"
+      ],
+      "reasons": {
+        "bkp-sw-ent": "Enterprise backup protecting valuable design IP and project files",
+        "bkp-appl": "Fast appliance for large CAD/BIM file sets with dedup",
+        "bkp-cloud-gw": "Cloud backup for off-site archival of completed project deliverables"
+      }
+    },
+    "monitoring": {
+      "items": [
+        "mon-sw",
+        "mon-apm",
+        "mon-dcim",
+        "mon-gpu"
+      ],
+      "reasons": {
+        "mon-sw": "Infrastructure monitoring for render farm and vGPU servers",
+        "mon-apm": "Performance monitoring of GPU utilization and render job throughput",
+        "mon-dcim": "DCIM critical - GPU servers have very high power density",
+        "mon-gpu": "NVIDIA DCGM telemetry for L40S vGPU utilization, frame buffer usage, and thermal throttling alerts"
+      }
+    },
+    "database": {
+      "items": [
+        "db-mssql",
+        "db-pg-sub"
+      ],
+      "reasons": {
+        "db-mssql": "SQL Server for project management, asset tracking, and billing",
+        "db-pg-sub": "PostgreSQL for open-source BIM data management platforms"
+      }
+    },
+    "vmware": {
+      "items": [
+        "vm-vsphere",
+        "vm-vcenter",
+        "vm-horizon",
+        "vm-vrops",
+        "hv-nutanix-aos",
+        "hv-hpe-simplivity"
+      ],
+      "reasons": {
+        "vm-vsphere": "vSphere for vGPU workload consolidation and HA",
+        "vm-vcenter": "vCenter for managing render farm VMs and designer desktops",
+        "vm-horizon": "VMware Horizon with NVIDIA vGPU for remote designer workstations",
+        "vm-vrops": "vROps for GPU resource optimization and render job scheduling",
+        "hv-nutanix-aos": "Nutanix HCI for render farm nodes — AHV with GPU passthrough support",
+        "hv-hpe-simplivity": "HPE SimpliVity for render nodes with built-in WAN optimisation and rapid backup"
+      }
+    },
+    "licenses": {
+      "items": [
+        "lic-win-srv",
+        "lic-antivirus",
+        "lic-citrix"
+      ],
+      "reasons": {
+        "lic-win-srv": "Windows Server DC for vGPU hosts and NVIDIA GRID licensing",
+        "lic-antivirus": "Endpoint protection for design workstations and render nodes",
+        "lic-citrix": "Citrix Virtual Apps for legacy CAD application delivery"
+      }
+    },
+    "power": {
+      "items": [
+        "pwr-ups-80k",
+        "pwr-pdu-smart",
+        "pwr-crac",
+        "pwr-gen"
+      ],
+      "reasons": {
+        "pwr-ups-80k": "80kVA - L40S GPU servers draw 350W each; full rack = 15kW+",
+        "pwr-pdu-smart": "High-amperage smart PDU (32A) for GPU rack power distribution",
+        "pwr-crac": "N+1 CRAC with direct liquid cooling option for GPU density",
+        "pwr-gen": "Generator for overnight render jobs that cannot be interrupted"
+      }
+    },
+    "rack": {
+      "items": [
+        "rack-42u",
+        "rack-cable-mgr",
+        "rack-kvm",
+        "rack-install",
+        "rack-amc"
+      ],
+      "reasons": {
+        "rack-42u": "Deep 42U racks (1000mm) for full-length GPU servers",
+        "rack-cable-mgr": "High-density cable management for 100G DAC/optical bundles",
+        "rack-kvm": "IP KVM for remote access to render nodes during off-hours",
+        "rack-install": "NVIDIA-certified rack integration for vGPU infrastructure",
+        "rack-amc": "5yr AMC for premium GPU investment protection"
+      }
+    }
+  }
+}

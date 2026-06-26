@@ -1,351 +1,67 @@
-import { useState, useEffect } from "react";
-import { Routes, Route, useNavigate, useParams, Navigate, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
+import { BRAND_COLORS, BRAND_LABELS, INFRA_CATEGORY_ORDER } from "./data/catalogue";
+import { Icon } from "./components/Icons";
 import { SEGMENTS } from "./data/segments";
-import { INFRA_CATALOGUE, INFRA_CATEGORY_ORDER, infraCatalogueEntries, BRAND_COLORS, BRAND_LABELS } from "./data/catalogue";
+import { useAppData, type ServerBrandsData, type ServerOptionsData } from "./hooks/useAppData";
+import { useCatalogue } from "./hooks/useCatalogue";
 import { useQuoteMoney } from "./hooks/useQuoteMoney";
-import {
-  normalizeQuoteSettings,
-  computeTaxTotals,
-  taxLineLabel,
-  totalInclTaxLabel,
-  formatMoney,
-} from "./utils/currency";
 import HomePage from "./pages/HomePage";
 import ProductPage from "./pages/ProductPage";
 import { downloadBoqPdf, type BoqPdfPayload } from "./utils/boqPdf";
+import {
+  computeTaxTotals,
+  formatMoney,
+  normalizeQuoteSettings,
+  taxLineLabel,
+  totalInclTaxLabel,
+} from "./utils/currency";
 
-const SEGMENT_RECOMMENDATIONS = {
-  retail: {
-    rationale: "Retail environments need reliable mid-tier servers for POS and e-commerce with HA storage, fast backups, and strong monitoring during peak seasons.",
-    servers: { brand: "dell", series: "PowerEdge R-Series (Rack)", modelId: "dell-r650", cpuType: "intel", cpuId: "xeon-gold-5415", cpuCount: 2, ramId: "ram-128", storageId: "sto-2x960", nicId: "nic-10g-2p", gpuId: "gpu-none", osId: "os-win-std", supportId: "sup-3y-nbd", psuId: "psu-redundant", qty: 4, reason: "PowerEdge R650 balances cost and performance for POS/inventory workloads. 4 nodes for HA." },
-    network: { items: ["net-cisco-c9300", "net-forti-fg1100e", "net-f5-ltm"], reasons: { "net-cisco-c9300": "Cisco Catalyst 9300 for POS and store access switching — DNA centre for visibility", "net-forti-fg1100e": "FortiGate 1100E NGFW for PCI-DSS payment network compliance and anti-malware", "net-f5-ltm": "F5 BIG-IP LTM for e-commerce web tier load balancing and session persistence" } },
-    storage: { items: ["sto-san-hybrid", "sto-nas"], reasons: { "sto-san-hybrid": "Hybrid SAN for mixed workloads — hot data on SSD, cold on HDD", "sto-nas": "NAS for shared product catalogue, media assets, and backups" } },
-    backup: { items: ["bkp-sw-ent", "bkp-appl"], reasons: { "bkp-sw-ent": "Enterprise backup software for daily RPO/RTO compliance", "bkp-appl": "Appliance with dedup for efficient retail transaction data backup" } },
-    monitoring: { items: ["mon-sw", "mon-apm", "mon-netflow", "mon-db"], reasons: { "mon-sw": "Infrastructure monitoring for server/network health and uptime", "mon-apm": "APM to monitor e-commerce app performance during peak seasons", "mon-netflow": "Network flow analysis to detect POS traffic anomalies", "mon-db": "Database performance monitoring for SQL Server POS transaction bottlenecks" } },
-    database: { items: ["db-mssql", "db-mysql-ent"], reasons: { "db-mssql": "SQL Server for POS transactions and inventory management", "db-mysql-ent": "MySQL for e-commerce product catalogue and web backend" } },
-    vmware: { items: ["vm-vsphere", "vm-vcenter", "hv-hyperv", "hv-scvmm"], reasons: { "vm-vsphere": "vSphere for retail server consolidation and live migration", "vm-vcenter": "vCenter for centralised VM lifecycle management", "hv-hyperv": "Hyper-V free with Windows Server DC — cost-effective for POS virtualisation", "hv-scvmm": "SCVMM for fabric-level management of Hyper-V hosts across stores" } },
-    licenses: { items: ["lic-win-srv", "lic-antivirus"], reasons: { "lic-win-srv": "Windows Server Datacenter for unlimited VMs on each host", "lic-antivirus": "Endpoint protection for POS terminals and servers" } },
-    power: { items: ["pwr-ups-10k", "pwr-pdu-smart", "pwr-crac"], reasons: { "pwr-ups-10k": "10kVA UPS per rack pair for power continuity", "pwr-pdu-smart": "Smart PDU for per-outlet metering and remote control", "pwr-crac": "CRAC unit to maintain 20-22C for reliable POS operation" } },
-    rack: { items: ["rack-42u", "rack-cable-mgr", "rack-kvm", "rack-install"], reasons: { "rack-42u": "42U rack for 4 servers + network + patch panels", "rack-cable-mgr": "Structured cabling for neat, maintainable layout", "rack-kvm": "16-port KVM for out-of-band server management", "rack-install": "Professional integration with labeling and documentation" } },
-  },
-  education: {
-    rationale: "Education needs scalable VDI for students, GPU for research labs, shared storage, and strong monitoring to support thousands of concurrent users.",
-    servers: { brand: "dell", series: "PowerEdge R-Series (Rack)", modelId: "dell-r750", cpuType: "intel", cpuId: "xeon-gold-6338", cpuCount: 2, ramId: "ram-256", storageId: "sto-4x1920", nicId: "nic-25g-2p", gpuId: "gpu-t4", osId: "os-rhel", supportId: "sup-3y-4hr", psuId: "psu-redundant", qty: 6, reason: "R750 2U with T4 GPU supports VDI and research workloads. 6 nodes for student concurrency." },
-    network: { items: ["net-aruba-6300", "net-aruba-8360", "net-forti-fg1100e", "net-f5-ltm"], reasons: { "net-aruba-6300": "Aruba CX 6300 PoE+ access switches for student labs and WiFi APs — AI Insights for campus ops", "net-aruba-8360": "Aruba CX 8360 25G aggregation with VSX for inter-VLAN and storage fabric", "net-forti-fg1100e": "FortiGate 1100E with web filtering and content inspection for campus AUP compliance", "net-f5-ltm": "F5 BIG-IP LTM for LMS and student portal load balancing during peak exam seasons" } },
-    storage: { items: ["sto-san-af", "sto-nas", "sto-obj"], reasons: { "sto-san-af": "All-Flash SAN for VDI boot and user profile performance", "sto-nas": "NAS for shared home drives, coursework, and lab files", "sto-obj": "Object storage for lecture recordings and media archives" } },
-    backup: { items: ["bkp-sw-ent", "bkp-appl", "bkp-cloud-gw"], reasons: { "bkp-sw-ent": "Enterprise backup for LMS databases and VDI gold images", "bkp-appl": "Dedup appliance for efficient daily backups of student data", "bkp-cloud-gw": "Cloud gateway for long-term academic archive offload" } },
-    monitoring: { items: ["mon-sw", "mon-apm", "mon-dcim", "mon-netflow"], reasons: { "mon-sw": "Infrastructure monitoring across campus server estate", "mon-apm": "APM for LMS performance during exam and enrollment peaks", "mon-dcim": "DCIM for data center energy efficiency and capacity planning", "mon-netflow": "Flow analysis for campus network traffic shaping" } },
-    database: { items: ["db-mssql", "db-pg-sub"], reasons: { "db-mssql": "SQL Server for student information and LMS backends", "db-pg-sub": "PostgreSQL for open-source research and lab databases" } },
-    vmware: { items: ["vm-vsphere", "vm-vcenter", "vm-vsan", "vm-horizon", "hv-ocp", "hv-proxmox"], reasons: { "vm-vsphere": "vSphere for VDI host consolidation", "vm-vcenter": "vCenter for centralised campus VM management", "vm-vsan": "vSAN for hyper-converged student desktop storage", "vm-horizon": "VMware Horizon for student virtual desktop delivery", "hv-ocp": "Red Hat OpenShift for research Kubernetes workloads and CI/CD labs", "hv-proxmox": "Proxmox VE for low-cost student lab virtualisation clusters" } },
-    licenses: { items: ["lic-win-srv", "lic-rhel", "lic-antivirus", "lic-citrix"], reasons: { "lic-win-srv": "Windows Server for AD, file, and print services", "lic-rhel": "RHEL for research and lab Linux workloads", "lic-antivirus": "Endpoint protection for lab desktops and servers", "lic-citrix": "Citrix for application delivery to thin clients" } },
-    power: { items: ["pwr-ups-10k", "pwr-pdu-smart", "pwr-crac"], reasons: { "pwr-ups-10k": "Modular UPS for each rack with N+1 redundancy", "pwr-pdu-smart": "Smart PDU for energy consumption tracking and budget reporting", "pwr-crac": "Precision cooling for dense VDI server clusters" } },
-    rack: { items: ["rack-42u", "rack-cable-mgr", "rack-kvm", "rack-install", "rack-amc"], reasons: { "rack-42u": "42U racks for 6 servers with storage and network", "rack-cable-mgr": "Color-coded structured cabling by VLAN/function", "rack-kvm": "KVM for remote lab administration", "rack-install": "Professional rack integration with full documentation", "rack-amc": "Annual maintenance contract for campus DC support" } },
-  },
-  healthcare: {
-    rationale: "Healthcare requires mission-critical HA, HIPAA compliance, high RAM for PACS imaging, encrypted storage, immutable backups, and 5-year 24x7 support.",
-    servers: { brand: "hp", series: "ProLiant DL-Series (Rack)", modelId: "hp-dl580g11", cpuType: "intel", cpuId: "xeon-plat-8360", cpuCount: 2, ramId: "ram-512", storageId: "sto-8x3840nvme", nicId: "nic-25g-4p", gpuId: "gpu-a10", osId: "os-win-dc", supportId: "sup-5y-247", psuId: "psu-titanium", qty: 4, reason: "DL580 Gen11 provides 4-socket scalability for PACS. 512GB RAM, A10 GPU for AI diagnostics, 5yr 24x7." },
-    network: { items: ["net-cisco-n9k-tor", "net-cisco-n9k-spine", "net-pa-pa5250", "net-f5-best", "net-cisco-asr1k"], reasons: { "net-cisco-n9k-tor": "Cisco Nexus 9300 ToR for PACS imaging traffic — VXLAN/ACI for clinical VLAN microsegmentation", "net-cisco-n9k-spine": "Cisco Nexus 9500 spine for non-blocking 100G PACS and EHR storage fabric", "net-pa-pa5250": "Palo Alto PA-5250 NGFW — App-ID and WildFire sandbox mandatory for HIPAA network security", "net-f5-best": "F5 BIG-IP i5800 ADC for EHR application HA, SSL offload, and session persistence", "net-cisco-asr1k": "Cisco ASR 1001-X for MPLS WAN interconnect between hospital sites and DR" } },
-    storage: { items: ["sto-san-af", "sto-nas", "sto-tape"], reasons: { "sto-san-af": "All-Flash SAN for sub-ms PACS image retrieval", "sto-nas": "NAS for clinical document management and DICOM archive", "sto-tape": "LTO-9 tape for 7-year HIPAA-compliant long-term archival" } },
-    backup: { items: ["bkp-sw-ent", "bkp-appl", "bkp-immutable", "bkp-cloud-gw"], reasons: { "bkp-sw-ent": "Veeam/Commvault for EHR/PACS backup orchestration", "bkp-appl": "Inline dedup appliance for fast clinical data backup", "bkp-immutable": "Immutable WORM repository for ransomware protection - HIPAA mandatory", "bkp-cloud-gw": "Cloud backup for geo-redundant DR of patient records" } },
-    monitoring: { items: ["mon-sw", "mon-apm", "mon-dcim", "mon-siem", "mon-db"], reasons: { "mon-sw": "24x7 infrastructure monitoring for clinical uptime", "mon-apm": "APM for EHR response time SLA compliance", "mon-dcim": "DCIM for power and cooling in HIPAA-controlled environment", "mon-siem": "SIEM for HIPAA audit logs, access monitoring, and threat detection", "mon-db": "Database performance monitoring for Oracle EHR and SQL Server" } },
-    database: { items: ["db-orcl", "db-mssql"], reasons: { "db-orcl": "Oracle DB Enterprise for mission-critical EHR platforms (Epic/Cerner)", "db-mssql": "SQL Server for clinical analytics and reporting databases" } },
-    vmware: { items: ["vm-vsphere", "vm-vcenter", "vm-vsan", "vm-nsx", "vm-vrops", "hv-nutanix-aos", "hv-nutanix-prism"], reasons: { "vm-vsphere": "vSphere Enterprise+ for clinical VM consolidation", "vm-vcenter": "vCenter for unified hospital VM management", "vm-vsan": "vSAN for all-flash HCI storage for EHR", "vm-nsx": "NSX micro-segmentation for HIPAA network isolation", "vm-vrops": "vROps for capacity planning and compliance reporting", "hv-nutanix-aos": "Nutanix AOS for HCI nodes running PACS imaging — AHV included", "hv-nutanix-prism": "Nutanix Prism Pro for AI-driven ops and capacity analytics on HCI" } },
-    licenses: { items: ["lic-win-srv", "lic-rhel", "lic-antivirus"], reasons: { "lic-win-srv": "Windows Server DC for AD, PACS clients, and EHR servers", "lic-rhel": "RHEL for clinical Linux workloads and database servers", "lic-antivirus": "Endpoint protection - mandatory for HIPAA compliance" } },
-    power: { items: ["pwr-ups-80k", "pwr-pdu-smart", "pwr-crac", "pwr-gen"], reasons: { "pwr-ups-80k": "80kVA 3-phase UPS - life-critical systems need no power interruption", "pwr-pdu-smart": "Smart PDU with per-outlet metering for compliance reporting", "pwr-crac": "Precision CRAC with N+1 redundancy for 24x7 clinical operation", "pwr-gen": "Diesel generator for multi-day power outage resilience" } },
-    rack: { items: ["rack-42u", "rack-cable-mgr", "rack-kvm", "rack-install", "rack-amc"], reasons: { "rack-42u": "42U racks with full security panels for HIPAA physical compliance", "rack-cable-mgr": "Color-coded cabling with HIPAA asset tracking labels", "rack-kvm": "IP KVM for secure out-of-band management", "rack-install": "Certified integration with HIPAA-compliant documentation", "rack-amc": "5yr AMC aligned with server support contract" } },
-  },
-  bfsi: {
-    rationale: "BFSI demands zero-downtime mission-critical infrastructure, low-latency 100G networking for trading, encrypted immutable storage, and full SIEM for regulatory compliance.",
-    servers: { brand: "dell", series: "PowerEdge R-Series (Rack)", modelId: "dell-r960", cpuType: "intel", cpuId: "xeon-plat-8592", cpuCount: 2, ramId: "ram-768", storageId: "sto-8x3840nvme", nicId: "nic-100g-4p", gpuId: "gpu-a30", osId: "os-rhel", supportId: "sup-5y-247", psuId: "psu-titanium", qty: 6, reason: "R960 for core banking - Platinum 8592+ for max throughput, 768GB RAM, 4x100G for algo trading latency." },
-    network: { items: ["net-cisco-n9k-tor", "net-cisco-n9k-spine", "net-pa-pa5250", "net-f5-best", "net-f5-gtm", "net-cisco-asr1k"], reasons: { "net-cisco-n9k-tor": "Cisco Nexus 9300 for 10/25G banking app server access — ACI policy for PCI-DSS zones", "net-cisco-n9k-spine": "Cisco Nexus 9500 non-blocking 100G spine for algo trading and core banking latency", "net-pa-pa5250": "Palo Alto PA-5250 NGFW — Panorama managed, WildFire sandbox, RBI/SEBI audit logs", "net-f5-best": "F5 BIG-IP i5800 ADC for internet banking SSL offload and transactional HA", "net-f5-gtm": "F5 BIG-IP DNS/GSLB for active-active DC failover and geo-redundant banking portals", "net-cisco-asr1k": "Cisco ASR 1001-X with MPLS for DC-to-DC interconnect and RBI-mandated DR link" } },
-    storage: { items: ["sto-san-af", "sto-obj", "sto-tape"], reasons: { "sto-san-af": "All-Flash SAN with <0.2ms latency for core banking OLTP", "sto-obj": "Object storage for regulatory document archive and audit trails", "sto-tape": "LTO-9 tape for 10-year RBI/SEBI mandatory records retention" } },
-    backup: { items: ["bkp-sw-ent", "bkp-appl", "bkp-immutable", "bkp-cloud-gw"], reasons: { "bkp-sw-ent": "Enterprise backup for core banking, CBS, and treasury apps", "bkp-appl": "Inline dedup for efficient backup of large financial datasets", "bkp-immutable": "WORM immutable backup - mandatory for RBI circular compliance", "bkp-cloud-gw": "Cloud gateway for geo-redundant DR with RTO < 2 hours" } },
-    monitoring: { items: ["mon-sw", "mon-apm", "mon-dcim", "mon-siem", "mon-db", "mon-aio"], reasons: { "mon-sw": "24x7 monitoring with automated alerting for zero-downtime SLA", "mon-apm": "APM for transaction response time monitoring (SLA < 200ms)", "mon-dcim": "DCIM for power chain visibility in regulated DC environment", "mon-siem": "SIEM mandatory for RBI/PCI-DSS security audit and log management", "mon-db": "DB performance monitor for Oracle RAC core banking query latency", "mon-aio": "Full-stack observability for unified trading platform telemetry" } },
-    database: { items: ["db-orcl", "db-mssql", "db-nosql"], reasons: { "db-orcl": "Oracle RAC for core banking, CBS, and trading platforms", "db-mssql": "SQL Server for MIS, reporting, and analytics workloads", "db-nosql": "MongoDB for fraud detection real-time event streaming" } },
-    vmware: { items: ["vm-vsphere", "vm-vcenter", "vm-vsan", "vm-nsx", "vm-vrops", "hv-ocp", "hv-oracle-vm", "hv-nutanix-aos"], reasons: { "vm-vsphere": "vSphere Enterprise+ for banking workload HA and DRS", "vm-vcenter": "vCenter for multi-site financial DC management", "vm-vsan": "vSAN stretched cluster for metro-level active-active storage", "vm-nsx": "NSX mandatory for PCI-DSS micro-segmentation of cardholder data", "vm-vrops": "vROps for capacity planning and ITIL-aligned change management", "hv-ocp": "Red Hat OpenShift for containerised microservices banking APIs and fintech workloads", "hv-oracle-vm": "Oracle VM Server for Oracle DB RAC hosting — certified, zero licensing uplift", "hv-nutanix-aos": "Nutanix HCI for DR site — AHV hypervisor with simple failover" } },
-    licenses: { items: ["lic-win-srv", "lic-rhel", "lic-antivirus"], reasons: { "lic-win-srv": "Windows Server DC for AD, WSUS, and Windows-based banking apps", "lic-rhel": "RHEL for core banking servers - certified by Oracle and IBM", "lic-antivirus": "CrowdStrike/Symantec - PCI-DSS requirement for all endpoints" } },
-    power: { items: ["pwr-ups-80k", "pwr-pdu-smart", "pwr-crac", "pwr-gen"], reasons: { "pwr-ups-80k": "80kVA 3-phase online UPS - no tolerance for power interruption in CBS", "pwr-pdu-smart": "Smart PDU with dual-feed for A+B power path redundancy", "pwr-crac": "N+2 CRAC units - banking DCs run 24x7x365", "pwr-gen": "500kVA generator for extended grid outage - RBI DC guidelines mandate this" } },
-    rack: { items: ["rack-42u", "rack-cable-mgr", "rack-kvm", "rack-install", "rack-amc"], reasons: { "rack-42u": "Heavy-duty 42U racks with locks for PCI-DSS physical security", "rack-cable-mgr": "Dual structured cable management for A+B path separation", "rack-kvm": "Secure IP KVM for audit-logged out-of-band access", "rack-install": "Bank-certified integration with full VAPT documentation", "rack-amc": "5yr premium AMC with guaranteed 4-hour SLA and spare parts depot" } },
-  },
-  transport: {
-    rationale: "Transport needs edge-capable servers for IoT ingestion, GPU for real-time analytics, redundant networking, and reliable 3-year support contracts.",
-    servers: { brand: "lenovo", series: "ThinkSystem SR-Series (Rack)", modelId: "len-sr650v3", cpuType: "intel", cpuId: "xeon-gold-6338", cpuCount: 2, ramId: "ram-256", storageId: "sto-4x1920", nicId: "nic-25g-2p", gpuId: "gpu-t4", osId: "os-rhel", supportId: "sup-3y-4hr", psuId: "psu-redundant", qty: 4, reason: "SR650 V3 with T4 GPU for real-time fleet analytics. 4 nodes across 2 sites for HA." },
-    network: { items: ["net-cisco-c9300", "net-forti-fg1100e", "net-forti-sd-wan", "net-cisco-asr1k"], reasons: { "net-cisco-c9300": "Cisco Catalyst 9300 at depot and hub sites — IoT device profiling via DNA Centre", "net-forti-fg1100e": "FortiGate 1100E NGFW to secure IoT gateway traffic and fleet management APIs", "net-forti-sd-wan": "Fortinet SD-WAN for cost-effective multi-site WAN with application-aware routing", "net-cisco-asr1k": "Cisco ASR 1001-X as hub router for MPLS/SD-WAN connectivity across transport network" } },
-    storage: { items: ["sto-san-hybrid", "sto-nas", "sto-obj"], reasons: { "sto-san-hybrid": "Hybrid SAN for mixed hot/warm fleet data workloads", "sto-nas": "NAS for route planning, schedule files, and shared operational data", "sto-obj": "Object storage for GPS telemetry, video surveillance, and logs archive" } },
-    backup: { items: ["bkp-sw-ent", "bkp-appl", "bkp-cloud-gw"], reasons: { "bkp-sw-ent": "Backup software for fleet management and operational databases", "bkp-appl": "Dedup appliance for daily backup of telemetry and transaction data", "bkp-cloud-gw": "Cloud backup for IoT data lake and long-term archive" } },
-    monitoring: { items: ["mon-sw", "mon-apm", "mon-dcim", "mon-netflow"], reasons: { "mon-sw": "Infrastructure monitoring for DC and edge nodes", "mon-apm": "APM for fleet management platform performance", "mon-dcim": "DCIM for remote DC facilities in transport hubs", "mon-netflow": "Network flow analysis for IoT device traffic patterns and WAN bandwidth" } },
-    database: { items: ["db-pg-sub", "db-nosql"], reasons: { "db-pg-sub": "PostgreSQL for fleet scheduling, routing, and transaction records", "db-nosql": "MongoDB for real-time IoT event streams and telemetry data" } },
-    vmware: { items: ["vm-vsphere", "vm-vcenter", "vm-vsan", "hv-nutanix-aos", "hv-azstack"], reasons: { "vm-vsphere": "vSphere for server consolidation across depot sites", "vm-vcenter": "vCenter for multi-site VM management", "vm-vsan": "vSAN for hyper-converged edge nodes at depots", "hv-nutanix-aos": "Nutanix HCI at remote depots — simple, ruggedised, single-vendor", "hv-azstack": "Azure Stack HCI for edge sites needing hybrid cloud connectivity to Azure IoT" } },
-    licenses: { items: ["lic-rhel", "lic-antivirus"], reasons: { "lic-rhel": "RHEL for IoT gateway and edge analytics servers", "lic-antivirus": "Endpoint protection for transport management terminals" } },
-    power: { items: ["pwr-ups-10k", "pwr-pdu-smart", "pwr-crac", "pwr-gen"], reasons: { "pwr-ups-10k": "10kVA modular UPS per rack", "pwr-pdu-smart": "Smart PDU for remote power cycling of edge nodes", "pwr-crac": "Precision cooling for transport hubs", "pwr-gen": "Generator for depot edge DCs with unreliable grid" } },
-    rack: { items: ["rack-42u", "rack-cable-mgr", "rack-kvm", "rack-install"], reasons: { "rack-42u": "42U rack for transport hubs", "rack-cable-mgr": "Structured cabling for operational maintainability", "rack-kvm": "IP KVM for remote management of distributed nodes", "rack-install": "Professional integration with network topology documentation" } },
-  },
-  manufacturing: {
-    rationale: "Manufacturing needs AMD EPYC for SAP HANA, SCADA isolation, industrial IoT integration, OT/IT separation via NSX, and 5-year support for production continuity.",
-    servers: { brand: "lenovo", series: "ThinkSystem SR-Series (Rack)", modelId: "len-sr665v3", cpuType: "amd", cpuId: "epyc-9454", cpuCount: 2, ramId: "ram-384", storageId: "sto-4x1600nvme", nicId: "nic-25g-2p", gpuId: "gpu-a10", osId: "os-rhel", supportId: "sup-5y-4hr", psuId: "psu-redundant", qty: 6, reason: "SR665 V3 (AMD EPYC 9454) is SAP-HANA certified. A10 GPU for AI-driven predictive maintenance." },
-    network: { items: ["net-cisco-n9k-tor", "net-cisco-n9k-spine", "net-pa-pa5250", "net-cisco-asr1k"], reasons: { "net-cisco-n9k-tor": "Cisco Nexus 9300 ToR for SCADA, MES, and SAP HANA server connectivity — OT/IT zoning", "net-cisco-n9k-spine": "Cisco Nexus 9500 100G spine for SAP HANA replication and production storage fabric", "net-pa-pa5250": "Palo Alto PA-5250 NGFW for OT/IT micro-segmentation — ICS/SCADA threat prevention signatures", "net-cisco-asr1k": "Cisco ASR 1001-X for plant-to-plant MPLS WAN and ERP connectivity" } },
-    storage: { items: ["sto-san-af", "sto-nas", "sto-obj"], reasons: { "sto-san-af": "All-Flash SAN for SAP HANA in-memory database persistence", "sto-nas": "NAS for CAD files, production docs, and quality records", "sto-obj": "Object storage for sensor telemetry, IoT data lake" } },
-    backup: { items: ["bkp-sw-ent", "bkp-appl", "bkp-immutable"], reasons: { "bkp-sw-ent": "Backup for SAP HANA, MES, and production databases", "bkp-appl": "Dedup appliance for efficient backup of large ERP datasets", "bkp-immutable": "Immutable backup for audit trail and compliance archival" } },
-    monitoring: { items: ["mon-sw", "mon-apm", "mon-dcim", "mon-siem", "mon-db"], reasons: { "mon-sw": "OT/IT infrastructure monitoring with SCADA integration", "mon-apm": "APM for SAP and MES application performance", "mon-dcim": "DCIM for industrial DC with power and environmental monitoring", "mon-siem": "SIEM for ICS security monitoring and incident response", "mon-db": "DB performance monitor for SAP HANA and Oracle ERP" } },
-    database: { items: ["db-orcl", "db-mssql", "db-nosql"], reasons: { "db-orcl": "Oracle DB for manufacturing ERP and supply chain platforms", "db-mssql": "SQL Server for MES, quality management, and plant reporting", "db-nosql": "MongoDB for IoT sensor data streams and predictive analytics" } },
-    vmware: { items: ["vm-vsphere", "vm-vcenter", "vm-vsan", "vm-nsx", "hv-ocp", "hv-nutanix-aos"], reasons: { "vm-vsphere": "vSphere for production server consolidation", "vm-vcenter": "vCenter for multi-plant DC management", "vm-vsan": "vSAN for SCADA and MES hyper-converged nodes", "vm-nsx": "NSX for OT/IT micro-segmentation - critical for ICS security", "hv-ocp": "OpenShift for containerised MES and IIoT analytics microservices", "hv-nutanix-aos": "Nutanix HCI at factory floor edge — AHV hypervisor, simple management" } },
-    licenses: { items: ["lic-rhel", "lic-suse", "lic-win-srv", "lic-antivirus"], reasons: { "lic-rhel": "RHEL - certified platform for SAP HANA and Oracle DB", "lic-suse": "SUSE Linux Enterprise - SAP preferred OS for HANA", "lic-win-srv": "Windows Server for MES clients and SCADA HMIs", "lic-antivirus": "Industrial-hardened endpoint protection for OT systems" } },
-    power: { items: ["pwr-ups-80k", "pwr-pdu-smart", "pwr-crac", "pwr-gen"], reasons: { "pwr-ups-80k": "80kVA online UPS - production stoppage is unacceptable", "pwr-pdu-smart": "Smart PDU for plant DC energy auditing", "pwr-crac": "Precision cooling for industrial DCs", "pwr-gen": "Generator for production continuity during grid maintenance" } },
-    rack: { items: ["rack-42u", "rack-cable-mgr", "rack-kvm", "rack-install", "rack-amc"], reasons: { "rack-42u": "42U racks with IP-rated doors for industrial environment", "rack-cable-mgr": "Color-coded cabling by plant system (SAP/SCADA/MES)", "rack-kvm": "IP KVM for remote SCADA server access", "rack-install": "Certified SAP-HANA infrastructure integration", "rack-amc": "5yr AMC - production DCs need guaranteed 4hr SLA" } },
-  },
-  research: {
-    rationale: "HPC/Research needs maximum GPU density, 100G fabric for MPI, TB-scale NVMe, parallel file systems, and specialized high-density rack builds.",
-    servers: { brand: "dell", series: "PowerEdge XE-Series (High Density/GPU)", modelId: "dell-xe8545", cpuType: "amd", cpuId: "epyc-9654", cpuCount: 2, ramId: "ram-1024", storageId: "sto-8x3840nvme", nicId: "nic-100g-4p", gpuId: "gpu-h100-80", osId: "os-rhel", supportId: "sup-5y-4hr", psuId: "psu-titanium", qty: 8, reason: "XE8545 with 4xA100/H100 GPUs is the gold standard for AI training clusters. AMD EPYC 9654 (96 cores) for HPC." },
-    network: { items: ["net-jun-qfx10k", "net-jun-qfx5120", "net-jun-mx204"], reasons: { "net-jun-qfx10k": "Juniper QFX10008 non-blocking spine — 160Tbps for MPI all-reduce and RDMA over converged fabric", "net-jun-qfx5120": "Juniper QFX5120 25G/100G ToR for GPU compute node connectivity and storage fabric", "net-jun-mx204": "Juniper MX204 core router for internet2/national research network and BGP peering" } },
-    storage: { items: ["sto-san-af", "sto-obj", "sto-nas"], reasons: { "sto-san-af": "All-Flash SAN for checkpoint storage and dataset staging", "sto-obj": "Object storage (Ceph/MinIO) for S3-compatible research data lake", "sto-nas": "Parallel NAS (GPFS/Lustre) for shared /scratch and /home" } },
-    backup: { items: ["bkp-sw-ent", "bkp-appl", "bkp-immutable", "bkp-cloud-gw"], reasons: { "bkp-sw-ent": "Backup for simulation results, trained models, and datasets", "bkp-appl": "High-throughput backup appliance for TB-scale checkpoint files", "bkp-immutable": "Immutable storage for published research data - grant compliance", "bkp-cloud-gw": "Cloud tier for cold research archive (AWS Glacier/Azure Cool)" } },
-    monitoring: { items: ["mon-sw", "mon-apm", "mon-dcim", "mon-gpu"], reasons: { "mon-sw": "HPC cluster monitoring with GPU utilization metrics", "mon-apm": "Job scheduler and MPI performance profiling", "mon-dcim": "DCIM critical for high-density GPU rack power and thermal management", "mon-gpu": "NVIDIA DCGM GPU telemetry - track GPU utilization, temperature, memory bandwidth, and ECC errors across the cluster" } },
-    database: { items: ["db-pg-sub", "db-nosql"], reasons: { "db-pg-sub": "PostgreSQL for experiment metadata, results tracking, and lab notebooks", "db-nosql": "MongoDB for unstructured research data and genomics pipelines" } },
-    vmware: { items: ["vm-vsphere", "vm-vcenter", "vm-vrops", "hv-ocp", "hv-ocp-storage", "hv-proxmox"], reasons: { "vm-vsphere": "vSphere for management VMs and interactive research nodes", "vm-vcenter": "vCenter for cluster lifecycle and resource management", "vm-vrops": "vROps for GPU and CPU utilization analytics and chargeback", "hv-ocp": "Red Hat OpenShift for AI/ML pipelines, Jupyter hubs, and model serving", "hv-ocp-storage": "OpenShift Data Foundation (Ceph) for S3-compatible research data lake on OpenShift", "hv-proxmox": "Proxmox VE for cost-effective lab and dev cluster virtualisation alongside HPC" } },
-    licenses: { items: ["lic-rhel", "lic-antivirus"], reasons: { "lic-rhel": "RHEL - required for HPC middleware (Slurm, OpenMPI, CUDA drivers)", "lic-antivirus": "Endpoint protection for cluster login nodes and storage servers" } },
-    power: { items: ["pwr-ups-80k", "pwr-pdu-smart", "pwr-crac", "pwr-gen"], reasons: { "pwr-ups-80k": "80kVA UPS - GPU cluster racks consume 20-30kW each", "pwr-pdu-smart": "Smart PDU with per-outlet monitoring for GPU node power measurement", "pwr-crac": "High-capacity CRAC - GPU servers generate extreme heat loads", "pwr-gen": "Generator for running multi-week training jobs through grid events" } },
-    rack: { items: ["rack-42u", "rack-cable-mgr", "rack-kvm", "rack-install", "rack-amc"], reasons: { "rack-42u": "42U high-density racks with enhanced airflow for GPU servers", "rack-cable-mgr": "High-density cable management for 100G DAC/fiber bundles", "rack-kvm": "IP KVM for cluster node console access during training jobs", "rack-install": "HPC-certified integration with fabric and storage cabling", "rack-amc": "5yr AMC to protect research investment in GPU infrastructure" } },
-  },
-  smb: {
-    rationale: "SMB needs cost-effective, easy-to-manage infrastructure with integrated backup, basic monitoring, and simple virtualization - minimal operational complexity.",
-    servers: { brand: "dell", series: "PowerEdge R-Series (Rack)", modelId: "dell-r350", cpuType: "intel", cpuId: "xeon-silver-4314", cpuCount: 1, ramId: "ram-64", storageId: "sto-2x480", nicId: "nic-1g-2p", gpuId: "gpu-none", osId: "os-win-std", supportId: "sup-3y-nbd", psuId: "psu-single", qty: 2, reason: "R350 entry-level provides reliable SMB server at low cost. 2 nodes for basic redundancy." },
-    network: { items: ["net-aruba-6300", "net-forti-fg100f"], reasons: { "net-aruba-6300": "Aruba CX 6300 managed PoE switch — right-sized for SMB servers, VoIP, and WiFi APs with zero-touch provisioning", "net-forti-fg100f": "FortiGate 100F UTM firewall — all-in-one NGFW, SD-WAN, VPN, and web filtering ideal for SMB budget" } },
-    storage: { items: ["sto-nas"], reasons: { "sto-nas": "NAS provides all SMB needs: file sharing, backup target, and simple iSCSI for VMs" } },
-    backup: { items: ["bkp-sw-ent", "bkp-appl"], reasons: { "bkp-sw-ent": "Backup software for business-critical data protection", "bkp-appl": "Compact backup appliance with dedup for SMB budget" } },
-    monitoring: { items: ["mon-sw", "mon-aio"], reasons: { "mon-sw": "Basic infrastructure monitoring for proactive alerting on small team", "mon-aio": "All-in-one observability replaces multiple point tools - cost-effective for SMB" } },
-    database: { items: ["db-mssql"], reasons: { "db-mssql": "SQL Server Standard for SMB ERP, CRM, and accounting applications" } },
-    vmware: { items: ["vm-vsphere", "vm-vcenter", "hv-hyperv", "hv-proxmox"], reasons: { "vm-vsphere": "vSphere Essentials for SMB VM consolidation on 2 nodes", "vm-vcenter": "vCenter Essentials for simple centralised management", "hv-hyperv": "Hyper-V free with Windows Server — zero extra cost for SMB VMs", "hv-proxmox": "Proxmox VE as budget-friendly alternative to vSphere for SMB KVM virtualisation" } },
-    licenses: { items: ["lic-win-srv", "lic-antivirus"], reasons: { "lic-win-srv": "Windows Server Standard for AD, DNS, DHCP, and file services", "lic-antivirus": "Business endpoint protection for all servers and PCs" } },
-    power: { items: ["pwr-ups-10k", "pwr-pdu-basic"], reasons: { "pwr-ups-10k": "10kVA UPS for server room power protection", "pwr-pdu-basic": "Basic PDU - cost-appropriate for SMB power distribution" } },
-    rack: { items: ["rack-42u", "rack-install"], reasons: { "rack-42u": "Single 42U rack sufficient for complete SMB infrastructure", "rack-install": "Professional racking and cabling to ensure neat, maintainable setup" } },
-  },
-  gaming: {
-    rationale: "Gaming platforms need high-frequency CPUs, fast NVMe, high-bandwidth NICs for real-time multiplayer, GPU for AI NPCs, and strong DDoS-capable network security.",
-    servers: { brand: "dell", series: "PowerEdge R-Series (Rack)", modelId: "dell-r750xa", cpuType: "intel", cpuId: "xeon-gold-6448", cpuCount: 2, ramId: "ram-256", storageId: "sto-4x1600nvme", nicId: "nic-25g-4p", gpuId: "gpu-a10", osId: "os-none", supportId: "sup-3y-4hr", psuId: "psu-redundant", qty: 8, reason: "R750xa with 4x25G NICs for game server sharding. A10 GPU for AI-driven NPC and anti-cheat ML models." },
-    network: { items: ["net-cisco-n9k-tor", "net-cisco-n9k-spine", "net-forti-fg4200f", "net-f5-best", "net-f5-asm", "net-cisco-asr1k"], reasons: { "net-cisco-n9k-tor": "Cisco Nexus 9300 ToR for game server sharding and inter-node traffic", "net-cisco-n9k-spine": "Cisco Nexus 9500 non-blocking 100G spine for matchmaking fabric", "net-forti-fg4200f": "FortiGate 4200F with NP7 ASIC — 200Gbps DDoS mitigation and volumetric attack defence", "net-f5-best": "F5 BIG-IP i5800 for game session ADC, matchmaking API load balancing, and SSL offload", "net-f5-asm": "F5 Advanced WAF for API protection, bot detection, and game economy fraud prevention", "net-cisco-asr1k": "Cisco ASR 1001-X with BGP for Anycast routing and global player latency optimisation" } },
-    storage: { items: ["sto-san-af", "sto-obj"], reasons: { "sto-san-af": "All-Flash SAN for game world state and player save data", "sto-obj": "Object storage for game asset CDN, updates, and player replays" } },
-    backup: { items: ["bkp-sw-ent", "bkp-appl", "bkp-immutable"], reasons: { "bkp-sw-ent": "Backup for player databases, economy, and world state", "bkp-appl": "Rapid recovery appliance for game world rollback capability", "bkp-immutable": "Immutable backup for player transaction records and anti-fraud" } },
-    monitoring: { items: ["mon-sw", "mon-apm", "mon-siem", "mon-netflow", "mon-aio"], reasons: { "mon-sw": "Real-time server health monitoring for game uptime SLA", "mon-apm": "Player experience monitoring - lag spikes directly impact retention", "mon-siem": "SIEM for account security, bot detection, and exploit monitoring", "mon-netflow": "Network flow analysis for DDoS early detection and player traffic profiling", "mon-aio": "Full-stack observability for matchmaking, game servers, and CDN in a single pane of glass" } },
-    database: { items: ["db-mssql", "db-nosql", "db-pg-sub"], reasons: { "db-mssql": "SQL Server for player accounts, billing, and in-game economy", "db-nosql": "MongoDB/Redis for real-time leaderboards, sessions, and game state", "db-pg-sub": "PostgreSQL for analytics, reporting, and player behavior data" } },
-    vmware: { items: ["vm-vsphere", "vm-vcenter", "vm-nsx", "hv-ocp", "hv-nutanix-aos"], reasons: { "vm-vsphere": "vSphere for dev, test, and management server workloads", "vm-vcenter": "vCenter for game platform VM lifecycle management", "vm-nsx": "NSX micro-segmentation for isolated game server zones and DDoS containment", "hv-ocp": "OpenShift for containerised game microservices, matchmaking APIs, and CI/CD pipelines", "hv-nutanix-aos": "Nutanix HCI for game analytics and backend services with rapid horizontal scale" } },
-    licenses: { items: ["lic-win-srv", "lic-antivirus"], reasons: { "lic-win-srv": "Windows Server for game backend services and admin tools", "lic-antivirus": "Endpoint protection for management and CI/CD infrastructure" } },
-    power: { items: ["pwr-ups-10k", "pwr-pdu-smart", "pwr-crac", "pwr-gen"], reasons: { "pwr-ups-10k": "Modular UPS per rack - game servers must not drop mid-match", "pwr-pdu-smart": "Smart PDU for per-server power monitoring and density planning", "pwr-crac": "Precision cooling for dense game server racks", "pwr-gen": "Generator - gaming outages go viral; 99.99% uptime is business-critical" } },
-    rack: { items: ["rack-42u", "rack-cable-mgr", "rack-kvm", "rack-install"], reasons: { "rack-42u": "42U racks for 8 game servers with full cabling", "rack-cable-mgr": "Color-coded cabling by game title/zone for operational clarity", "rack-kvm": "IP KVM for rapid emergency server access during live incidents", "rack-install": "Professional integration with network zone documentation" } },
-  },
-  design: {
-    rationale: "Design & Architecture needs professional GPU servers for rendering, high-bandwidth shared storage, NVIDIA-certified visualization platforms, and Windows DC for Citrix/VDI delivery.",
-    servers: { brand: "dell", series: "PowerEdge XE-Series (High Density/GPU)", modelId: "dell-xe8545", cpuType: "intel", cpuId: "xeon-plat-8360", cpuCount: 2, ramId: "ram-512", storageId: "sto-4x1600nvme", nicId: "nic-100g-2p", gpuId: "gpu-l40s", osId: "os-win-dc", supportId: "sup-5y-4hr", psuId: "psu-titanium", qty: 4, reason: "XE8545 with NVIDIA L40S (48GB) is purpose-built for professional visualization, BIM rendering, and VFX workflows." },
-    network: { items: ["net-jun-qfx5120", "net-jun-qfx10k", "net-f5-ltm", "net-pa-pa820"], reasons: { "net-jun-qfx5120": "Juniper QFX5120 25G/100G ToR for GPU-to-storage render fabric — low latency for large frame transfers", "net-jun-qfx10k": "Juniper QFX10008 spine for high-bandwidth GPU cluster and NAS interconnect", "net-f5-ltm": "F5 BIG-IP LTM for vGPU session delivery and Horizon/Citrix connection broker load balancing", "net-pa-pa820": "Palo Alto PA-820 NGFW for IP protection of proprietary design assets and secure remote rendering access" } },
-    storage: { items: ["sto-san-af", "sto-nas", "sto-obj"], reasons: { "sto-san-af": "All-Flash SAN for active project files and render farm scratch", "sto-nas": "High-throughput NAS for shared project repositories", "sto-obj": "Object storage for completed renders, archives, and asset libraries" } },
-    backup: { items: ["bkp-sw-ent", "bkp-appl", "bkp-cloud-gw"], reasons: { "bkp-sw-ent": "Enterprise backup protecting valuable design IP and project files", "bkp-appl": "Fast appliance for large CAD/BIM file sets with dedup", "bkp-cloud-gw": "Cloud backup for off-site archival of completed project deliverables" } },
-    monitoring: { items: ["mon-sw", "mon-apm", "mon-dcim", "mon-gpu"], reasons: { "mon-sw": "Infrastructure monitoring for render farm and vGPU servers", "mon-apm": "Performance monitoring of GPU utilization and render job throughput", "mon-dcim": "DCIM critical - GPU servers have very high power density", "mon-gpu": "NVIDIA DCGM telemetry for L40S vGPU utilization, frame buffer usage, and thermal throttling alerts" } },
-    database: { items: ["db-mssql", "db-pg-sub"], reasons: { "db-mssql": "SQL Server for project management, asset tracking, and billing", "db-pg-sub": "PostgreSQL for open-source BIM data management platforms" } },
-    vmware: { items: ["vm-vsphere", "vm-vcenter", "vm-horizon", "vm-vrops", "hv-nutanix-aos", "hv-hpe-simplivity"], reasons: { "vm-vsphere": "vSphere for vGPU workload consolidation and HA", "vm-vcenter": "vCenter for managing render farm VMs and designer desktops", "vm-horizon": "VMware Horizon with NVIDIA vGPU for remote designer workstations", "vm-vrops": "vROps for GPU resource optimization and render job scheduling", "hv-nutanix-aos": "Nutanix HCI for render farm nodes — AHV with GPU passthrough support", "hv-hpe-simplivity": "HPE SimpliVity for render nodes with built-in WAN optimisation and rapid backup" } },
-    licenses: { items: ["lic-win-srv", "lic-antivirus", "lic-citrix"], reasons: { "lic-win-srv": "Windows Server DC for vGPU hosts and NVIDIA GRID licensing", "lic-antivirus": "Endpoint protection for design workstations and render nodes", "lic-citrix": "Citrix Virtual Apps for legacy CAD application delivery" } },
-    power: { items: ["pwr-ups-80k", "pwr-pdu-smart", "pwr-crac", "pwr-gen"], reasons: { "pwr-ups-80k": "80kVA - L40S GPU servers draw 350W each; full rack = 15kW+", "pwr-pdu-smart": "High-amperage smart PDU (32A) for GPU rack power distribution", "pwr-crac": "N+1 CRAC with direct liquid cooling option for GPU density", "pwr-gen": "Generator for overnight render jobs that cannot be interrupted" } },
-    rack: { items: ["rack-42u", "rack-cable-mgr", "rack-kvm", "rack-install", "rack-amc"], reasons: { "rack-42u": "Deep 42U racks (1000mm) for full-length GPU servers", "rack-cable-mgr": "High-density cable management for 100G DAC/optical bundles", "rack-kvm": "IP KVM for remote access to render nodes during off-hours", "rack-install": "NVIDIA-certified rack integration for vGPU infrastructure", "rack-amc": "5yr AMC for premium GPU investment protection" } },
-  },
-};
-
-const SERVER_BRANDS = {
-  dell: {
-    label: "Dell PowerEdge", logo: "DELL", color: "#007DB8", series: {
-      "PowerEdge R-Series (Rack)": {
-        models: [
-          { id: "dell-r250", name: "PowerEdge R250", formFactor: "1U", basePrice: 1800, tier: "Entry" },
-          { id: "dell-r350", name: "PowerEdge R350", formFactor: "1U", basePrice: 2400, tier: "Entry" },
-          { id: "dell-r450", name: "PowerEdge R450", formFactor: "1U", basePrice: 4200, tier: "Mid-range" },
-          { id: "dell-r550", name: "PowerEdge R550", formFactor: "2U", basePrice: 5800, tier: "Mid-range" },
-          { id: "dell-r650", name: "PowerEdge R650", formFactor: "1U", basePrice: 7200, tier: "Mid-range" },
-          { id: "dell-r750", name: "PowerEdge R750", formFactor: "2U", basePrice: 9500, tier: "High-end" },
-          { id: "dell-r750xa", name: "PowerEdge R750xa", formFactor: "2U", basePrice: 14000, tier: "High-end" },
-          { id: "dell-r850", name: "PowerEdge R850", formFactor: "2U", basePrice: 18000, tier: "High-end" },
-          { id: "dell-r940", name: "PowerEdge R940", formFactor: "4U", basePrice: 28000, tier: "Mission Critical" },
-          { id: "dell-r960", name: "PowerEdge R960", formFactor: "4U", basePrice: 38000, tier: "Mission Critical" },
-          { id: "dell-r6625", name: "PowerEdge R6625 (AMD)", formFactor: "1U", basePrice: 8500, tier: "High-end" },
-          { id: "dell-r7625", name: "PowerEdge R7625 (AMD)", formFactor: "2U", basePrice: 12000, tier: "High-end" },
-        ]
-      },
-      "PowerEdge T-Series (Tower)": {
-        models: [
-          { id: "dell-t150", name: "PowerEdge T150", formFactor: "Tower", basePrice: 1200, tier: "Entry" },
-          { id: "dell-t350", name: "PowerEdge T350", formFactor: "Tower", basePrice: 2200, tier: "Entry" },
-          { id: "dell-t550", name: "PowerEdge T550", formFactor: "Tower", basePrice: 4800, tier: "Mid-range" },
-          { id: "dell-t650", name: "PowerEdge T650", formFactor: "Tower", basePrice: 7500, tier: "High-end" },
-        ]
-      },
-      "PowerEdge XE-Series (High Density/GPU)": {
-        models: [
-          { id: "dell-xe2420", name: "PowerEdge XE2420", formFactor: "2U", basePrice: 18000, tier: "High-end" },
-          { id: "dell-xe8545", name: "PowerEdge XE8545 (GPU)", formFactor: "4U", basePrice: 85000, tier: "Mission Critical" },
-          { id: "dell-xe9680", name: "PowerEdge XE9680 (AI/GPU)", formFactor: "8U", basePrice: 180000, tier: "Mission Critical" },
-        ]
-      },
-    }
-  },
-  hp: {
-    label: "HPE ProLiant", logo: "HPE", color: "#01A982", series: {
-      "ProLiant DL-Series (Rack)": {
-        models: [
-          { id: "hp-dl20g11", name: "ProLiant DL20 Gen11", formFactor: "1U", basePrice: 1600, tier: "Entry" },
-          { id: "hp-dl360g11", name: "ProLiant DL360 Gen11", formFactor: "1U", basePrice: 5200, tier: "Mid-range" },
-          { id: "hp-dl380g11", name: "ProLiant DL380 Gen11", formFactor: "2U", basePrice: 7800, tier: "Mid-range" },
-          { id: "hp-dl385g11", name: "ProLiant DL385 Gen11 (AMD)", formFactor: "2U", basePrice: 8500, tier: "High-end" },
-          { id: "hp-dl560g11", name: "ProLiant DL560 Gen11", formFactor: "2U", basePrice: 16000, tier: "High-end" },
-          { id: "hp-dl580g11", name: "ProLiant DL580 Gen11", formFactor: "4U", basePrice: 28000, tier: "Mission Critical" },
-        ]
-      },
-      "ProLiant ML-Series (Tower)": {
-        models: [
-          { id: "hp-ml30g11", name: "ProLiant ML30 Gen11", formFactor: "Tower", basePrice: 1400, tier: "Entry" },
-          { id: "hp-ml110g11", name: "ProLiant ML110 Gen11", formFactor: "Tower", basePrice: 2600, tier: "Entry" },
-          { id: "hp-ml350g11", name: "ProLiant ML350 Gen11", formFactor: "Tower", basePrice: 5400, tier: "Mid-range" },
-        ]
-      },
-      "Apollo / Cray (HPC/GPU)": {
-        models: [
-          { id: "hp-apo2000g2", name: "Apollo 2000 Gen10+", formFactor: "2U", basePrice: 22000, tier: "High-end" },
-          { id: "hp-apo6500g11", name: "Apollo 6500 Gen11 (GPU)", formFactor: "4U", basePrice: 78000, tier: "Mission Critical" },
-          { id: "hp-cray-xd665", name: "Cray XD665 (AI/HPC)", formFactor: "2U", basePrice: 145000, tier: "Mission Critical" },
-        ]
-      },
-    }
-  },
-  lenovo: {
-    label: "Lenovo ThinkSystem", logo: "LENOVO", color: "#E2231A", series: {
-      "ThinkSystem SR-Series (Rack)": {
-        models: [
-          { id: "len-sr250v3", name: "ThinkSystem SR250 V3", formFactor: "1U", basePrice: 1700, tier: "Entry" },
-          { id: "len-sr630v3", name: "ThinkSystem SR630 V3", formFactor: "1U", basePrice: 5400, tier: "Mid-range" },
-          { id: "len-sr650v3", name: "ThinkSystem SR650 V3", formFactor: "2U", basePrice: 8200, tier: "Mid-range" },
-          { id: "len-sr655v3", name: "ThinkSystem SR655 V3 (AMD)", formFactor: "1U", basePrice: 6800, tier: "Mid-range" },
-          { id: "len-sr665v3", name: "ThinkSystem SR665 V3 (AMD)", formFactor: "2U", basePrice: 9500, tier: "High-end" },
-          { id: "len-sr675v3", name: "ThinkSystem SR675 V3 (AMD)", formFactor: "2U", basePrice: 12500, tier: "High-end" },
-          { id: "len-sr850v3", name: "ThinkSystem SR850 V3", formFactor: "2U", basePrice: 18000, tier: "High-end" },
-          { id: "len-sr860v3", name: "ThinkSystem SR860 V3", formFactor: "4U", basePrice: 32000, tier: "Mission Critical" },
-          { id: "len-sr950v3", name: "ThinkSystem SR950 V3", formFactor: "4U", basePrice: 42000, tier: "Mission Critical" },
-        ]
-      },
-      "ThinkSystem ST-Series (Tower)": {
-        models: [
-          { id: "len-st250v3", name: "ThinkSystem ST250 V3", formFactor: "Tower", basePrice: 1500, tier: "Entry" },
-          { id: "len-st650v3", name: "ThinkSystem ST650 V3", formFactor: "Tower", basePrice: 5800, tier: "Mid-range" },
-        ]
-      },
-      "ThinkSystem SD-Series (High Density/GPU)": {
-        models: [
-          { id: "len-sd530", name: "ThinkSystem SD530 (2U4N)", formFactor: "2U", basePrice: 14000, tier: "High-end" },
-          { id: "len-sd650v3", name: "ThinkSystem SD650 V3 (GPU)", formFactor: "2U", basePrice: 55000, tier: "Mission Critical" },
-          { id: "len-sd650nv3", name: "ThinkSystem SD650-N V3 (AI)", formFactor: "2U", basePrice: 95000, tier: "Mission Critical" },
-        ]
-      },
-    }
-  },
-};
-
-const CPU_OPTIONS = {
-  intel: [
-    { id: "xeon-silver-4314", label: "Xeon Silver 4314 (16C/2.4GHz)", priceAdder: 0 },
-    { id: "xeon-silver-4416", label: "Xeon Silver 4416+ (20C/2.0GHz)", priceAdder: 200 },
-    { id: "xeon-gold-5415", label: "Xeon Gold 5415+ (8C/2.9GHz)", priceAdder: 600 },
-    { id: "xeon-gold-6338", label: "Xeon Gold 6338 (32C/2.0GHz)", priceAdder: 1800 },
-    { id: "xeon-gold-6448", label: "Xeon Gold 6448Y (32C/2.1GHz)", priceAdder: 2200 },
-    { id: "xeon-plat-8360", label: "Xeon Platinum 8360Y (36C/2.4GHz)", priceAdder: 4500 },
-    { id: "xeon-plat-8468", label: "Xeon Platinum 8468 (48C/2.1GHz)", priceAdder: 7200 },
-    { id: "xeon-plat-8592", label: "Xeon Platinum 8592+ (64C/1.9GHz)", priceAdder: 9500 },
-  ],
-  amd: [
-    { id: "epyc-9124", label: "EPYC 9124 (16C/3.0GHz)", priceAdder: 800 },
-    { id: "epyc-9254", label: "EPYC 9254 (24C/2.9GHz)", priceAdder: 1500 },
-    { id: "epyc-9354", label: "EPYC 9354 (32C/3.25GHz)", priceAdder: 2800 },
-    { id: "epyc-9454", label: "EPYC 9454 (48C/2.75GHz)", priceAdder: 4200 },
-    { id: "epyc-9554", label: "EPYC 9554 (64C/3.1GHz)", priceAdder: 6500 },
-    { id: "epyc-9654", label: "EPYC 9654 (96C/2.4GHz)", priceAdder: 9800 },
-    { id: "epyc-9754", label: "EPYC 9754 (128C/2.25GHz)", priceAdder: 14000 },
-  ]
-};
-const RAM_OPTIONS = [
-  { id: "ram-64", label: "64 GB DDR5", priceAdder: 0 }, { id: "ram-128", label: "128 GB DDR5", priceAdder: 600 },
-  { id: "ram-256", label: "256 GB DDR5", priceAdder: 1400 }, { id: "ram-384", label: "384 GB DDR5", priceAdder: 2200 },
-  { id: "ram-512", label: "512 GB DDR5", priceAdder: 3200 }, { id: "ram-768", label: "768 GB DDR5", priceAdder: 5000 },
-  { id: "ram-1024", label: "1 TB DDR5", priceAdder: 7500 }, { id: "ram-1536", label: "1.5 TB DDR5", priceAdder: 11000 }, { id: "ram-2048", label: "2 TB DDR5", priceAdder: 16000 },
-];
-const STORAGE_OPT = [
-  { id: "sto-none", label: "No Local Storage", priceAdder: 0 }, { id: "sto-2x480", label: "2x480GB SATA SSD RAID-1", priceAdder: 200 },
-  { id: "sto-2x960", label: "2x960GB SATA SSD RAID-1", priceAdder: 380 }, { id: "sto-4x1920", label: "4x1.92TB SATA SSD RAID-5", priceAdder: 1200 },
-  { id: "sto-2x800nvme", label: "2x800GB NVMe RAID-1", priceAdder: 900 }, { id: "sto-4x1600nvme", label: "4x1.6TB NVMe RAID-5", priceAdder: 2800 },
-  { id: "sto-8x3840nvme", label: "8x3.84TB NVMe RAID-6", priceAdder: 9500 }, { id: "sto-4x8hdd", label: "4x8TB SAS HDD RAID-5", priceAdder: 1400 },
-  { id: "sto-12x12hdd", label: "12x12TB NLSAS HDD RAID-6", priceAdder: 3600 },
-];
-const NIC_OPT = [
-  { id: "nic-1g-2p", label: "2x1GbE", priceAdder: 0 }, { id: "nic-10g-2p", label: "2x10GbE SFP+", priceAdder: 350 },
-  { id: "nic-25g-2p", label: "2x25GbE SFP28", priceAdder: 650 }, { id: "nic-25g-4p", label: "4x25GbE SFP28", priceAdder: 1100 },
-  { id: "nic-100g-2p", label: "2x100GbE QSFP28", priceAdder: 2200 }, { id: "nic-100g-4p", label: "4x100GbE QSFP28", priceAdder: 3800 },
-];
-const GPU_OPT = [
-  { id: "gpu-none", label: "No GPU", priceAdder: 0 }, { id: "gpu-t4", label: "NVIDIA T4 (16GB)", priceAdder: 3200 },
-  { id: "gpu-a10", label: "NVIDIA A10 (24GB)", priceAdder: 5500 }, { id: "gpu-a30", label: "NVIDIA A30 (24GB HBM2)", priceAdder: 8000 },
-  { id: "gpu-a100-40", label: "NVIDIA A100 40GB SXM", priceAdder: 14000 }, { id: "gpu-a100-80", label: "NVIDIA A100 80GB SXM", priceAdder: 18000 },
-  { id: "gpu-h100-80", label: "NVIDIA H100 80GB SXM5", priceAdder: 32000 }, { id: "gpu-l40s", label: "NVIDIA L40S (48GB Viz)", priceAdder: 11000 },
-];
-const OS_OPT = [
-  { id: "os-none", label: "No OS (BYO)", priceAdder: 0 }, { id: "os-win-std", label: "Windows Server 2022 Standard", priceAdder: 1200 },
-  { id: "os-win-dc", label: "Windows Server 2022 Datacenter", priceAdder: 6200 }, { id: "os-rhel", label: "RHEL 9 (1yr)", priceAdder: 800 },
-  { id: "os-sles", label: "SUSE Linux Enterprise 15", priceAdder: 600 }, { id: "os-vmware", label: "VMware ESXi (license sep.)", priceAdder: 0 },
-];
-const SUPPORT_OPT = [
-  { id: "sup-base", label: "Basic 1-Year NBD", priceAdder: 0 }, { id: "sup-3y-nbd", label: "3-Year Next Business Day", priceAdder: 800 },
-  { id: "sup-3y-4hr", label: "3-Year 4-Hour Onsite", priceAdder: 1800 }, { id: "sup-5y-4hr", label: "5-Year 4-Hour Onsite", priceAdder: 3200 },
-  { id: "sup-5y-247", label: "5-Year 24x7 Mission Critical", priceAdder: 5500 },
-];
-const PSU_OPT = [
-  { id: "psu-single", label: "Single PSU", priceAdder: 0 }, { id: "psu-redundant", label: "Redundant (1+1) PSU", priceAdder: 300 },
-  { id: "psu-titanium", label: "Redundant Titanium Efficiency", priceAdder: 650 },
-];
-
-const computeServerPrice = (cfg) => {
-  const brand = SERVER_BRANDS[cfg.brand]; if (!brand) return 0;
+const computeServerPrice = (cfg, serverBrands: ServerBrandsData | null, serverOptions: ServerOptionsData | null) => {
+  if (!serverBrands || !serverOptions) return 0;
+  const brand = serverBrands[cfg.brand]; if (!brand) return 0;
   const sd = brand.series[cfg.series]; if (!sd) return 0;
   const model = sd.models.find(m => m.id === cfg.modelId); if (!model) return 0;
-  const cpuList = CPU_OPTIONS[cfg.cpuType] || CPU_OPTIONS.intel;
+  const cpuList = serverOptions.cpuOptions[cfg.cpuType] || serverOptions.cpuOptions.intel;
   const cpu = cpuList.find(c => c.id === cfg.cpuId) || cpuList[0];
-  const ram = RAM_OPTIONS.find(r => r.id === cfg.ramId) || RAM_OPTIONS[0];
-  const sto = STORAGE_OPT.find(s => s.id === cfg.storageId) || STORAGE_OPT[0];
-  const nic = NIC_OPT.find(n => n.id === cfg.nicId) || NIC_OPT[0];
-  const gpu = GPU_OPT.find(g => g.id === cfg.gpuId) || GPU_OPT[0];
-  const os = OS_OPT.find(o => o.id === cfg.osId) || OS_OPT[0];
-  const sup = SUPPORT_OPT.find(s => s.id === cfg.supportId) || SUPPORT_OPT[0];
-  const psu = PSU_OPT.find(p => p.id === cfg.psuId) || PSU_OPT[0];
+  const ram = serverOptions.ramOptions.find(r => r.id === cfg.ramId) || serverOptions.ramOptions[0];
+  const sto = serverOptions.storageOptions.find(s => s.id === cfg.storageId) || serverOptions.storageOptions[0];
+  const nic = serverOptions.nicOptions.find(n => n.id === cfg.nicId) || serverOptions.nicOptions[0];
+  const gpu = serverOptions.gpuOptions.find(g => g.id === cfg.gpuId) || serverOptions.gpuOptions[0];
+  const os = serverOptions.osOptions.find(o => o.id === cfg.osId) || serverOptions.osOptions[0];
+  const sup = serverOptions.supportOptions.find(s => s.id === cfg.supportId) || serverOptions.supportOptions[0];
+  const psu = serverOptions.psuOptions.find(p => p.id === cfg.psuId) || serverOptions.psuOptions[0];
   return (model.basePrice + cpu.priceAdder * cfg.cpuCount + ram.priceAdder + sto.priceAdder + nic.priceAdder + gpu.priceAdder + os.priceAdder + sup.priceAdder + psu.priceAdder) * cfg.qty;
 };
 
-function buildBoqReportData({ projectInfo, serverConfigs, infraSelections, grandTotal, serverTotal, infraTotal, seg, rec }) {
+function buildBoqReportData({ projectInfo, serverConfigs, infraSelections, grandTotal, serverTotal, infraTotal, seg, rec, catalogue, serverBrands, serverOptions }) {
   const quote = normalizeQuoteSettings(projectInfo);
   const fx = quote.fxRate;
   const { subtotal, tax, total } = computeTaxTotals(grandTotal, quote);
   const refNo = `BOQ-${Date.now().toString(36).toUpperCase()}`;
   const today = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });
   const serverLines = serverConfigs.map((cfg) => {
-    const brand = SERVER_BRANDS[cfg.brand];
+    const brand = serverBrands?.[cfg.brand];
     const model = brand?.series[cfg.series]?.models.find(m => m.id === cfg.modelId);
-    const cpuList = cfg.cpuType === "amd" ? CPU_OPTIONS.amd : CPU_OPTIONS.intel;
-    const cpu = cpuList.find(c => c.id === cfg.cpuId);
-    const ram = RAM_OPTIONS.find(r => r.id === cfg.ramId);
-    const sto = STORAGE_OPT.find(s => s.id === cfg.storageId);
-    const nic = NIC_OPT.find(n => n.id === cfg.nicId);
-    const gpu = GPU_OPT.find(g => g.id === cfg.gpuId);
-    const os = OS_OPT.find(o => o.id === cfg.osId);
-    const sup = SUPPORT_OPT.find(s => s.id === cfg.supportId);
-    const psu = PSU_OPT.find(p => p.id === cfg.psuId);
-    const up = computeServerPrice({ ...cfg, qty: 1 });
+    const cpuList = cfg.cpuType === "amd" ? serverOptions?.cpuOptions.amd : serverOptions?.cpuOptions.intel;
+    const cpu = cpuList?.find(c => c.id === cfg.cpuId);
+    const ram = serverOptions?.ramOptions.find(r => r.id === cfg.ramId);
+    const sto = serverOptions?.storageOptions.find(s => s.id === cfg.storageId);
+    const nic = serverOptions?.nicOptions.find(n => n.id === cfg.nicId);
+    const gpu = serverOptions?.gpuOptions.find(g => g.id === cfg.gpuId);
+    const os = serverOptions?.osOptions.find(o => o.id === cfg.osId);
+    const sup = serverOptions?.supportOptions.find(s => s.id === cfg.supportId);
+    const psu = serverOptions?.psuOptions.find(p => p.id === cfg.psuId);
+    const up = computeServerPrice({ ...cfg, qty: 1 }, serverBrands, serverOptions);
     const spec = [cpu ? `${cfg.cpuCount}x ${cpu.label}` : null, ram?.label, sto?.label, nic?.label, gpu?.id !== "gpu-none" ? gpu?.label : null, os?.id !== "os-none" ? os?.label : null, psu?.label, sup?.label].filter(Boolean).join(" | ");
-    return { category: brand?.label || "Server", color: brand?.color || "#1e40af", icon: "🖥️", name: model?.name || "-", spec, unitPrice: up * fx, qty: cfg.qty, total: up * cfg.qty * fx };
+    return { category: brand?.label || "Server", color: brand?.color || "#1e40af", icon: "server", name: model?.name || "-", spec, unitPrice: up * fx, qty: cfg.qty, total: up * cfg.qty * fx };
   });
   const infraLines = [];
   INFRA_CATEGORY_ORDER.forEach((layer) => {
     const items = infraSelections[layer];
     if (!items) return;
-    const cat = INFRA_CATALOGUE[layer];
+    const cat = catalogue?.categories[layer];
+    if (!cat) return;
     Object.entries(items).forEach(([id, qty]) => { if (qty > 0) { const item = cat.items.find(i => i.id === id); if (item) infraLines.push({ category: cat.label, color: cat.color, icon: cat.icon, name: item.name, spec: item.spec, unitPrice: item.unitPrice * fx, qty, total: item.unitPrice * qty * fx }); } });
   });
   const allLines = [...serverLines, ...infraLines];
@@ -376,23 +92,33 @@ function Configurator() {
   const [segKey, setSegKey] = useState(null);
   const { projectInfo } = useProject();
   const { fmt, totalsFromUsd } = useQuoteMoney();
+  const { catalogue, loading: catLoading, error: catError } = useCatalogue();
+  const {
+    segmentRecommendations,
+    serverBrands,
+    serverOptions,
+    loading: appDataLoading,
+    error: appDataError,
+  } = useAppData();
   const [serverConfigs, setServerConfigs] = useState([]);
   const [infraSelections, setInfraSelections] = useState({});
   const [aiBoqResult, setAiBoqResult] = useState(null);
 
   const activeTab = tab === "report" ? "servers" : (tab || "servers");
-  const validTabs = ["servers", ...INFRA_CATEGORY_ORDER, "ai-result"];
+  const validTabs = ["servers", "database", ...INFRA_CATEGORY_ORDER, "ai-result"];
 
   useEffect(() => {
     if (!segmentId || !SEGMENTS[segmentId]) return;
     if (segKey === segmentId) return;
-    const rec = SEGMENT_RECOMMENDATIONS[segmentId];
+    if (!segmentRecommendations) return;
+    const rec = segmentRecommendations[segmentId];
+    if (!rec) return;
     setServerConfigs([{ ...rec.servers }]);
     const ni = {};
-    Object.entries(rec).forEach(([l, d]) => { if (l === "servers" || l === "rationale") return; ni[l] = {}; d.items.forEach(id => { ni[l][id] = 1; }); });
+    Object.entries(rec).forEach(([l, d]) => { if (l === "servers" || l === "rationale") return; ni[l] = {}; (d as any).items.forEach(id => { ni[l][id] = 1; }); });
     setInfraSelections(ni);
     setSegKey(segmentId);
-  }, [segmentId, segKey]);
+  }, [segmentId, segKey, segmentRecommendations]);
 
   useEffect(() => {
     const stored = sessionStorage.getItem("aiBoqResult");
@@ -404,21 +130,70 @@ function Configurator() {
   if (!segmentId || !SEGMENTS[segmentId]) return <Navigate to="/segments" replace />;
   if (tab && tab !== "report" && !validTabs.includes(tab)) return <Navigate to={`/segments/${segmentId}/servers`} replace />;
 
-  const addServer = () => { const rec = SEGMENT_RECOMMENDATIONS[segKey]?.servers || {}; const brand = SERVER_BRANDS[rec.brand || "dell"]; const sk = rec.series || Object.keys(brand.series)[0]; setServerConfigs(p => [...p, { ...rec, brand: rec.brand || "dell", series: sk, modelId: rec.modelId || brand.series[sk].models[0].id, qty: 1 }]); };
+  // Show loading state while catalogue or app data is being fetched
+  if (catLoading || appDataLoading) {
+    return (
+      <div className="boq-app">
+        <header className="boq-header">
+          <div className="boq-header-left">
+            <div className="boq-mark">
+              <img src="/logo.png" alt="Sniper Presales Logo" className="boq-logo" />
+            </div>
+          </div>
+        </header>
+        <main className="boq-container" style={{ padding: "3rem", textAlign: "center" }}>
+          <p style={{ color: "var(--boq-ink-muted)", fontFamily: "var(--boq-mono)", fontSize: "0.75rem" }}>Loading catalogue...</p>
+        </main>
+      </div>
+    );
+  }
+
+  // Show error state if catalogue or app data failed to load
+  if (catError || appDataError || !catalogue || !serverBrands || !serverOptions) {
+    return (
+      <div className="boq-app">
+        <header className="boq-header">
+          <div className="boq-header-left">
+            <Link to="/" className="boq-btn boq-btn-ghost boq-btn-sm">← Home</Link>
+          </div>
+        </header>
+        <main className="boq-container" style={{ padding: "3rem" }}>
+          <div className="boq-form-card">
+            <div className="boq-form-card-header">
+              <div className="boq-form-card-header-icon" style={{ border: "none", background: "transparent" }}>
+                <Icon name="warning" size={20} style={{ color: "var(--boq-danger)" }} />
+              </div>
+              <div>
+                <h2>Catalogue Unavailable</h2>
+                <p>Cannot load product catalogue from server.</p>
+              </div>
+            </div>
+            {(catError || appDataError) && (
+              <div className="boq-form-body">
+                <p style={{ color: "var(--boq-ink-soft)", fontSize: "0.875rem" }}>{catError || appDataError}</p>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  const addServer = () => { const rec = segmentRecommendations?.[segKey]?.servers || {}; const brand = serverBrands?.[rec.brand || "dell"]; const sk = rec.series || Object.keys(brand?.series || {})[0]; setServerConfigs(p => [...p, { ...rec, brand: rec.brand || "dell", series: sk, modelId: rec.modelId || brand?.series[sk]?.models[0]?.id, qty: 1 }]); };
   const removeServer = (i) => setServerConfigs(p => p.filter((_, idx) => idx !== i));
-  const updateServer = (i, f, v) => setServerConfigs(p => p.map((c, idx) => { if (idx !== i) return c; const u = { ...c, [f]: v }; if (f === "brand") { const b = SERVER_BRANDS[v]; const s = Object.keys(b.series)[0]; u.series = s; u.modelId = b.series[s].models[0].id; u.cpuType = "intel"; u.cpuId = CPU_OPTIONS.intel[0].id; } if (f === "series") u.modelId = SERVER_BRANDS[c.brand].series[v]?.models[0]?.id || c.modelId; return u; }));
+  const updateServer = (i, f, v) => setServerConfigs(p => p.map((c, idx) => { if (idx !== i) return c; const u = { ...c, [f]: v }; if (f === "brand") { const b = serverBrands?.[v]; const s = Object.keys(b?.series || {})[0]; u.series = s; u.modelId = b?.series[s]?.models[0]?.id; u.cpuType = "intel"; u.cpuId = serverOptions?.cpuOptions.intel[0]?.id; } if (f === "series") u.modelId = serverBrands?.[c.brand]?.series[v]?.models[0]?.id || c.modelId; return u; }));
   const updateInfraQty = (layer, id, delta) => setInfraSelections(prev => { const cat = { ...(prev[layer] || {}) }; const n = Math.max(0, (cat[id] || 0) + delta); if (n === 0) delete cat[id]; else cat[id] = n; return { ...prev, [layer]: cat }; });
 
-  const serverTotal = serverConfigs.reduce((a, c) => a + computeServerPrice(c), 0);
-  const infraTotal = Object.entries(infraSelections).reduce((t, [layer, items]) => t + Object.entries(items).reduce((s, [id, qty]) => { const item = INFRA_CATALOGUE[layer]?.items.find(i => i.id === id); return s + (item ? item.unitPrice * qty : 0); }, 0), 0);
+  const serverTotal = serverConfigs.reduce((a, c) => a + computeServerPrice(c, serverBrands, serverOptions), 0);
+  const infraTotal = Object.entries(infraSelections).reduce((t, [layer, items]) => t + Object.entries(items).reduce((s, [id, qty]) => { const item = catalogue?.categories[layer]?.items.find(i => i.id === id); return s + (item ? item.unitPrice * qty : 0); }, 0), 0);
   const grandTotalUsd = serverTotal + infraTotal;
   const quoteTotals = totalsFromUsd(grandTotalUsd);
   const seg = segmentId ? SEGMENTS[segmentId] : null;
-  const rec = segmentId ? SEGMENT_RECOMMENDATIONS[segmentId] : null;
+  const rec = segmentId ? segmentRecommendations?.[segmentId] : null;
 
   const handleGenerateBoq = () => {
     if (grandTotalUsd <= 0) return;
-    const { payload } = buildBoqReportData({ projectInfo, serverConfigs, infraSelections, grandTotal: grandTotalUsd, serverTotal, infraTotal, seg, rec });
+    const { payload } = buildBoqReportData({ projectInfo, serverConfigs, infraSelections, grandTotal: grandTotalUsd, serverTotal, infraTotal, seg, rec, catalogue, serverBrands, serverOptions });
     try {
       downloadBoqPdf(payload);
       navigate(`/segments/${segmentId}/report`);
@@ -430,8 +205,8 @@ function Configurator() {
   };
 
   if (tab === "report") {
-    const report = buildBoqReportData({ projectInfo, serverConfigs, infraSelections, grandTotal: grandTotalUsd, serverTotal, infraTotal, seg, rec });
-    return <ReportView report={report} projectInfo={projectInfo} serverConfigs={serverConfigs} infraSelections={infraSelections} grandTotalUsd={grandTotalUsd} serverTotal={serverTotal} infraTotal={infraTotal} seg={seg} rec={rec} fmt={fmt} quote={report.quote} quoteTotals={quoteTotals} onBack={() => navigate(`/segments/${segmentId}/servers`)} />;
+    const report = buildBoqReportData({ projectInfo, serverConfigs, infraSelections, grandTotal: grandTotalUsd, serverTotal, infraTotal, seg, rec, catalogue, serverBrands, serverOptions });
+    return <ReportView report={report} projectInfo={projectInfo} serverConfigs={serverConfigs} infraSelections={infraSelections} grandTotalUsd={grandTotalUsd} serverTotal={serverTotal} infraTotal={infraTotal} seg={seg} rec={rec} fmt={fmt} quote={report.quote} quoteTotals={quoteTotals} onBack={() => navigate(`/segments/${segmentId}/servers`)} catalogue={catalogue} />;
   }
 
   const tabCode = (key: string) => {
@@ -449,16 +224,16 @@ function Configurator() {
     return key.slice(0, 3).toUpperCase();
   };
   const LAYER_TABS = [
-    { key: "vmware", label: INFRA_CATALOGUE.vmware.label },
+    { key: "vmware", label: catalogue?.categories.vmware?.label ?? "Hypervisor" },
     { key: "servers", label: "Servers" },
-    { key: "rack", label: INFRA_CATALOGUE.rack.label },
-    { key: "power", label: INFRA_CATALOGUE.power.label },
-    { key: "network", label: INFRA_CATALOGUE.network.label },
-    { key: "database", label: INFRA_CATALOGUE.database.label },
-    { key: "storage", label: INFRA_CATALOGUE.storage.label },
-    { key: "backup", label: INFRA_CATALOGUE.backup.label },
-    { key: "licenses", label: INFRA_CATALOGUE.licenses.label },
-    { key: "monitoring", label: INFRA_CATALOGUE.monitoring.label },
+    { key: "rack", label: catalogue?.categories.rack?.label ?? "Rack & Stack" },
+    { key: "power", label: catalogue?.categories.power?.label ?? "Power" },
+    { key: "network", label: catalogue?.categories.network?.label ?? "Network" },
+    { key: "database", label: "Database" },
+    { key: "storage", label: catalogue?.categories.storage?.label ?? "Storage" },
+    { key: "backup", label: catalogue?.categories.backup?.label ?? "Backup" },
+    { key: "licenses", label: catalogue?.categories.licenses?.label ?? "Licenses" },
+    { key: "monitoring", label: catalogue?.categories.monitoring?.label ?? "Monitoring" },
   ] as const;
 
   return (
@@ -468,38 +243,150 @@ function Configurator() {
           <div className="boq-mark">
             <img src="/logo.png" alt="Sniper Presales Logo" className="boq-logo" />
           </div>
-          <div>
-            <div className="boq-brand-title">Sniper Presales Tool</div>
+          <div className="boq-header-brand-text">
+            <div className="boq-brand-title">Sniper datacenter Presales</div>
             <div className="boq-brand-sub">BOQ Configurator · v9</div>
           </div>
-          {seg && <span className="boq-badge">{seg.icon} {seg.label}</span>}
+          {seg && <span className="boq-badge" style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem" }}><Icon name={seg.icon} size={11} /> {seg.label}</span>}
         </div>
         <div className="boq-header-actions">
-          <Link to="/" className="boq-btn boq-btn-ghost">Home</Link>
-          <button type="button" onClick={() => navigate("/ai")} className="boq-btn boq-btn-ghost">AI BOQ</button>
-          <button type="button" onClick={() => navigate("/segments")} className="boq-btn boq-btn-ghost">Segments</button>
+          <Link to="/" className="boq-btn boq-btn-ghost boq-btn-sm" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
+            <Icon name="home" size={13} />
+            <span className="boq-header-nav-label">Home</span>
+          </Link>
+          <button type="button" onClick={() => navigate("/ai")} className="boq-btn boq-btn-ghost boq-btn-sm" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
+            <Icon name="sparkles" size={13} />
+            <span className="boq-header-nav-label">AI BOQ</span>
+          </button>
+          <button type="button" onClick={() => navigate("/segments")} className="boq-btn boq-btn-ghost boq-btn-sm" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
+            <Icon name="menu" size={13} />
+            <span className="boq-header-nav-label">Segments</span>
+          </button>
+          {grandTotalUsd > 0 && (
+            <div
+              className="boq-header-nav-label"
+              style={{
+                display: "flex",
+                gap: "0.3rem",
+                fontFamily: "var(--boq-mono)",
+                fontSize: "0.5rem",
+                color: "var(--boq-ink-muted)",
+                letterSpacing: "0.04em",
+              }}
+            >
+              <span style={{ color: "var(--boq-ink-soft)" }}>SRV</span>
+              <span style={{ color: "var(--boq-accent)", fontWeight: 700 }}>{fmt(serverTotal)}</span>
+              <span>·</span>
+              <span style={{ color: "var(--boq-ink-soft)" }}>INFRA</span>
+              <span style={{ color: "var(--boq-teal)", fontWeight: 700 }}>{fmt(infraTotal)}</span>
+            </div>
+          )}
           <div className="boq-total-pill">
             <span>TOTAL</span>
             <span>{fmt(grandTotalUsd)}</span>
           </div>
-          <button type="button" onClick={handleGenerateBoq} disabled={grandTotalUsd === 0} className="boq-btn boq-btn-primary">Generate BOQ →</button>
+          <button type="button" onClick={handleGenerateBoq} disabled={grandTotalUsd === 0} className="boq-btn boq-btn-primary boq-btn-sm" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
+            <Icon name="arrow_right" size={13} />
+            <span className="boq-header-nav-label">Generate BOQ</span>
+          </button>
         </div>
       </header>
       <HypervisorSelector infraSelections={infraSelections} updateInfraQty={updateInfraQty} rec={rec} seg={seg} />
       <div className="boq-layout">
         <aside className="boq-sidebar">
+          {/* Grand total summary strip */}
+          {grandTotalUsd > 0 && (
+            <div
+              style={{
+                margin: "0 0 0.75rem",
+                padding: "0.6rem 0.75rem",
+                background: "var(--boq-accent-muted)",
+                border: "1px solid var(--boq-accent-light)",
+                borderRadius: "var(--boq-radius-sm)",
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: "var(--boq-mono)",
+                  fontSize: "0.5rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.09em",
+                  textTransform: "uppercase",
+                  color: "var(--boq-accent)",
+                  marginBottom: "0.35rem",
+                }}
+              >
+                Quote summary
+              </div>
+              {[
+                { label: "Servers", value: fmt(serverTotal), color: "var(--boq-ink)" },
+                { label: "Infrastructure", value: fmt(infraTotal), color: "var(--boq-teal)" },
+              ].map(row => (
+                <div
+                  key={row.label}
+                  style={{ display: "flex", justifyContent: "space-between", fontSize: "0.6875rem", marginBottom: "0.15rem" }}
+                >
+                  <span style={{ color: "var(--boq-ink-muted)" }}>{row.label}</span>
+                  <span style={{ fontFamily: "var(--boq-mono)", fontWeight: 700, color: row.color }}>{row.value}</span>
+                </div>
+              ))}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginTop: "0.35rem",
+                  paddingTop: "0.35rem",
+                  borderTop: "1px solid var(--boq-accent-light)",
+                  fontSize: "0.75rem",
+                }}
+              >
+                <span style={{ fontWeight: 700, color: "var(--boq-ink)" }}>Total</span>
+                <span style={{ fontFamily: "var(--boq-mono)", fontWeight: 700, color: "var(--boq-accent)" }}>{fmt(grandTotalUsd)}</span>
+              </div>
+            </div>
+          )}
           <p className="boq-label" style={{ marginBottom: "0.5rem" }}>Infrastructure Layers</p>
           <nav className="boq-nav-tabs">
             {LAYER_TABS.map(t => {
               const hasRec = t.key === "servers"
                 ? (serverConfigs.length > 0)
-                : (infraSelections[t.key] && Object.keys(infraSelections[t.key]).length > 0);
+                : t.key === "database"
+                  ? (Object.keys(infraSelections.sql_database || {}).length > 0 || Object.keys(infraSelections.nosql_database || {}).length > 0)
+                  : (infraSelections[t.key] && Object.keys(infraSelections[t.key]).length > 0);
               const isActive = (tab || "servers") === t.key;
+
+              // Per-layer subtotal
+              const layerTotal = (() => {
+                if (t.key === "servers") return serverTotal;
+                if (t.key === "database") {
+                  const sqlT = Object.entries(infraSelections.sql_database || {}).reduce((s, [id, q]) => s + (catalogue?.categories.sql_database?.items.find(i => i.id === id)?.unitPrice || 0) * (q as number), 0);
+                  const nosqlT = Object.entries(infraSelections.nosql_database || {}).reduce((s, [id, q]) => s + (catalogue?.categories.nosql_database?.items.find(i => i.id === id)?.unitPrice || 0) * (q as number), 0);
+                  return sqlT + nosqlT;
+                }
+                return Object.entries(infraSelections[t.key] || {}).reduce((s, [id, q]) => s + (catalogue?.categories[t.key]?.items.find(i => i.id === id)?.unitPrice || 0) * (q as number), 0);
+              })();
+
               return (
                 <button key={t.key} type="button" onClick={() => navigate(`/segments/${segmentId}/${t.key}`)} className={`boq-nav-tab${isActive ? " boq-nav-tab-active" : ""}`} >
                   <span className="boq-nav-tab-code">{tabCode(t.key)}</span>
                   <span className="boq-nav-tab-label">{t.label}</span>
-                  {hasRec && <span className="boq-nav-dot" />}
+                  {layerTotal > 0 ? (
+                    <span
+                      style={{
+                        fontFamily: "var(--boq-mono)",
+                        fontSize: "0.5rem",
+                        fontWeight: 700,
+                        color: isActive ? "rgba(255,255,255,0.8)" : "var(--boq-accent)",
+                        marginLeft: "auto",
+                        flexShrink: 0,
+                        letterSpacing: "0.02em",
+                      }}
+                    >
+                      {fmt(layerTotal)}
+                    </span>
+                  ) : hasRec ? (
+                    <span className="boq-nav-dot" />
+                  ) : null}
                 </button>
               );
             })}
@@ -530,8 +417,30 @@ function Configurator() {
           {activeTab === "ai-result"
             ? <AIResultPanel result={aiBoqResult} fmt={fmt} onRerun={() => navigate("/ai")} />
             : activeTab === "servers"
-              ? <ServerPanel configs={serverConfigs} updateConfig={updateServer} addConfig={addServer} removeConfig={removeServer} seg={seg} rec={rec} fmt={fmt} />
-              : <InfraPanel cat={INFRA_CATALOGUE[activeTab]} categoryKey={activeTab} selections={infraSelections[activeTab] || {}} updateQty={(id, d) => updateInfraQty(activeTab, id, d)} rec={rec?.[activeTab]} seg={seg} fmt={fmt} />
+              ? <ServerPanel configs={serverConfigs} updateConfig={updateServer} addConfig={addServer} removeConfig={removeServer} seg={seg} rec={rec} fmt={fmt} serverBrands={serverBrands} serverOptions={serverOptions} />
+              : activeTab === "database"
+                ? <>
+                    <InfraPanel
+                      cat={catalogue?.categories.sql_database}
+                      categoryKey="sql_database"
+                      selections={infraSelections.sql_database || {}}
+                      updateQty={(id, d) => updateInfraQty("sql_database", id, d)}
+                      rec={rec?.sql_database}
+                      seg={seg}
+                      fmt={fmt}
+                    />
+                    <div style={{ height: "20px" }} />
+                    <InfraPanel
+                      cat={catalogue?.categories.nosql_database}
+                      categoryKey="nosql_database"
+                      selections={infraSelections.nosql_database || {}}
+                      updateQty={(id, d) => updateInfraQty("nosql_database", id, d)}
+                      rec={rec?.nosql_database}
+                      seg={seg}
+                      fmt={fmt}
+                    />
+                  </>
+                : <InfraPanel cat={catalogue?.categories[activeTab]} categoryKey={activeTab} selections={infraSelections[activeTab] || {}} updateQty={(id, d) => updateInfraQty(activeTab, id, d)} rec={rec?.[activeTab]} seg={seg} fmt={fmt} />
           }
         </main>
       </div>
@@ -540,18 +449,17 @@ function Configurator() {
 }
 
 const HV_VENDORS = [
-  { key: "vmware", label: "VMware", color: "#607078", icon: "🔵", ids: ["vm-vsphere", "vm-vcenter", "vm-vsan", "vm-nsx", "vm-horizon", "vm-vrops"] },
-  { key: "microsoft", label: "Microsoft", color: "#0078d4", icon: "🪟", ids: ["hv-hyperv", "hv-scvmm", "hv-azstack"] },
-  { key: "redhat", label: "Red Hat", color: "#cc0000", icon: "🎩", ids: ["hv-ocp", "hv-oshift-virt", "hv-ocp-storage"] },
-  { key: "oracle", label: "Oracle", color: "#f80000", icon: "☁️", ids: ["hv-oracle-vm", "hv-oracle-olvm", "hv-oracle-oci-hci"] },
-  { key: "nutanix", label: "Nutanix", color: "#024da1", icon: "🟦", ids: ["hv-nutanix-aos", "hv-nutanix-prism", "hv-nutanix-nc2", "hv-nutanix-files"] },
-  { key: "hpe", label: "HPE", color: "#01a982", icon: "🟢", ids: ["hv-hpe-morpheus", "hv-hpe-simplivity", "hv-hpe-synergy-cm"] },
-
+  { key: "vmware", label: "VMware", color: "#607078", icon: "vmware_brand", ids: ["vm-vsphere", "vm-vcenter", "vm-vsan", "vm-nsx", "vm-horizon", "vm-vrops"] },
+  { key: "microsoft", label: "Microsoft", color: "#0078d4", icon: "microsoft_brand", ids: ["hv-hyperv", "hv-scvmm", "hv-azstack"] },
+  { key: "redhat", label: "Red Hat", color: "#cc0000", icon: "redhat_brand", ids: ["hv-ocp", "hv-oshift-virt", "hv-ocp-storage"] },
+  { key: "oracle", label: "Oracle", color: "#f80000", icon: "oracle_brand", ids: ["hv-oracle-vm", "hv-oracle-olvm", "hv-oracle-oci-hci"] },
+  { key: "nutanix", label: "Nutanix", color: "#024da1", icon: "nutanix_brand", ids: ["hv-nutanix-aos", "hv-nutanix-prism", "hv-nutanix-nc2", "hv-nutanix-files"] },
+  { key: "hpe", label: "HPE", color: "#01a982", icon: "hpe_brand", ids: ["hv-hpe-morpheus", "hv-hpe-simplivity", "hv-hpe-synergy-cm"] },
 ];
 
-function HypervisorSelector({ infraSelections, updateInfraQty, rec, seg }) {
+function HypervisorSelector({ infraSelections, updateInfraQty, rec, seg, catalogue }) {
   const { fmt } = useQuoteMoney();
-  const hvItems = INFRA_CATALOGUE.vmware?.items || [];
+  const hvItems = catalogue?.categories.vmware?.items || [];
   const selectedIds = Object.keys(infraSelections.vmware || {});
   const [expanded, setExpanded] = useState(false);
 
@@ -578,7 +486,9 @@ function HypervisorSelector({ infraSelections, updateInfraQty, rec, seg }) {
           </div>
         </div>
         {totalSelected > 0 && <span className="boq-pill-accent">{totalSelected} selected</span>}
-        <span className={`boq-hv-chevron${expanded ? " boq-hv-chevron-open" : ""}`}>▾</span>
+        <span className={`boq-hv-chevron${expanded ? " boq-hv-chevron-open" : ""}`} style={{ display: "inline-flex", alignItems: "center" }}>
+          <Icon name={expanded ? "chevron_up" : "chevron_down"} size={14} />
+        </span>
       </div>
       {expanded && (
         <div>
@@ -605,7 +515,7 @@ function HypervisorSelector({ infraSelections, updateInfraQty, rec, seg }) {
                       <button key={item.id} type="button" onClick={() => toggleHv(item.id)}
                         className={`boq-hv-chip${isSelected ? " boq-hv-chip-selected" : ""}`}
                         style={isSelected ? { borderColor: vendor.color } : undefined}>
-                        {isSelected && <span>✓</span>}
+                        {isSelected && <Icon name="check" size={12} style={{ color: vendor.color, marginRight: 4 }} />}
                         <span>
                           <div style={{ lineHeight: 1.2 }}>{item.name}</div>
                           <div className="boq-hv-chip-price">{item.unitPrice === 0 ? "Free" : fmt(item.unitPrice)}</div>
@@ -627,41 +537,195 @@ function HypervisorSelector({ infraSelections, updateInfraQty, rec, seg }) {
   );
 }
 
+// Complexity tier derived from recommended item count
+function segmentTier(itemCount: number): { label: string; color: string } {
+  if (itemCount >= 35) return { label: "Enterprise", color: "var(--boq-danger)" };
+  if (itemCount >= 25) return { label: "High", color: "var(--boq-accent)" };
+  if (itemCount >= 15) return { label: "Mid", color: "var(--boq-teal)" };
+  return { label: "Standard", color: "var(--boq-ink-muted)" };
+}
+
+// Per-layer item count breakdown for a segment
+function segmentLayerBreakdown(key: string, segmentRecommendations: Record<string, any> | null) {
+  const rec = segmentRecommendations?.[key];
+  if (!rec) return [];
+  return [
+    { code: "SRV", count: 1 },
+    { code: "NET", count: rec.network?.items.length ?? 0 },
+    { code: "STG", count: rec.storage?.items.length ?? 0 },
+    { code: "BKP", count: rec.backup?.items.length ?? 0 },
+    { code: "MON", count: rec.monitoring?.items.length ?? 0 },
+    { code: "DB",  count: (rec.sql_database?.items.length ?? 0) + (rec.nosql_database?.items.length ?? 0) },
+    { code: "HV",  count: rec.vmware?.items.length ?? 0 },
+  ].filter(l => l.count > 0);
+}
+
 function SegmentScreen({ onSelect, onAI }) {
-  const [hov, setHov] = useState(null);
+  const [hov, setHov] = useState<string | null>(null);
+  const { catalogue, loading: catLoading } = useCatalogue();
+  const { segmentRecommendations } = useAppData();
+  const totalSkus = catalogue
+    ? Object.values(catalogue.categories).reduce((a, c) => a + c.items.length, 0)
+    : null;
   return (
-    <div className="boq-app boq-segment-page">
-      <Link to="/" className="boq-btn boq-btn-ghost boq-back-link">← Home</Link>
-      <div className="boq-segment-hero">
-        <p className="boq-eyebrow">Segment index</p>
-        <h1 className="boq-page-title">Select industry vertical</h1>
-        <p className="boq-page-lead">Choose a segment for a pre-configured full-stack—servers, network, storage, hypervisor, monitoring—or draft a bill from written requirements.</p>
-        <button type="button" onClick={onAI} className="boq-btn boq-btn-accent" style={{ marginTop: "1rem", maxWidth: 280 }}>
-          Draft from requirements
-        </button>
-      </div>
-      <div className="boq-segment-grid">
-        {Object.entries(SEGMENTS).map(([key, seg], i) => {
-          const rc = Object.values(SEGMENT_RECOMMENDATIONS[key]).reduce((a, v) => typeof v === "object" && v.items ? a + v.items.length : a, 0);
-          const active = hov === key;
-          return (
-            <button key={key} type="button" onClick={() => onSelect(key)} onMouseEnter={() => setHov(key)} onMouseLeave={() => setHov(null)}
-              className={`boq-segment-card${active ? " boq-segment-card-active" : ""}`}>
-              <span className="boq-seg-code">{String(i + 1).padStart(2, "0")}</span>
-              <span>
-                <span className="boq-index-label">{seg.label}</span>
-                <span className="boq-index-desc">{seg.description}</span>
-              </span>
-              <span className="boq-index-meta">{rc} items →</span>
-            </button>
-          );
-        })}
+    <div className="boq-app">
+      {/* Proper masthead */}
+      <header className="boq-masthead">
+        <div className="boq-header-left">
+          <Link to="/" className="boq-btn boq-btn-ghost boq-btn-sm">← Home</Link>
+          <div className="boq-header-divider" />
+          <div className="boq-header-brand-text">
+            <div className="boq-brand-title">Sniper Datacenter Presales</div>
+            <div className="boq-brand-sub">Segment Index · BOQ Platform</div>
+          </div>
+        </div>
+        <div className="boq-header-right">
+          <button
+            type="button"
+            onClick={onAI}
+            className="boq-btn boq-btn-accent boq-btn-sm"
+            style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
+          >
+            <Icon name="sparkles" size={13} />
+            <span className="boq-header-nav-label">Requirements → BOQ</span>
+          </button>
+        </div>
+      </header>
+
+      <div className="boq-segment-page" style={{ position: "relative" }}>
+        {/* Hero */}
+        <div className="boq-segment-hero">
+          <p className="boq-eyebrow">Segment index</p>
+          <h1 className="boq-page-title">Select industry vertical</h1>
+          <p className="boq-page-lead">
+            Each vertical loads a pre-configured full-stack — compute, network, storage,
+            hypervisor, backup, monitoring, database — all tuned to that sector's
+            requirements and compliance needs.
+          </p>
+          {/* Quick stat row */}
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.75rem" }}>
+            {[
+              { label: "Verticals", value: Object.keys(SEGMENTS).length },
+              { label: "Catalogue layers", value: INFRA_CATEGORY_ORDER.length },
+              { label: "Total SKUs", value: catLoading ? "…" : (totalSkus ?? "—") },
+            ].map(s => (
+              <div
+                key={s.label}
+                style={{
+                  padding: "0.35rem 0.75rem",
+                  background: "var(--boq-paper-bright)",
+                  border: "1px solid var(--boq-rule)",
+                  borderRadius: "var(--boq-radius-sm)",
+                  display: "flex",
+                  alignItems: "baseline",
+                  gap: "0.4rem",
+                }}
+              >
+                <span style={{ fontFamily: "var(--boq-mono)", fontWeight: 700, fontSize: "0.875rem", color: "var(--boq-accent)" }}>
+                  {s.value}
+                </span>
+                <span style={{ fontFamily: "var(--boq-mono)", fontSize: "0.5rem", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--boq-ink-muted)" }}>
+                  {s.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Segment cards */}
+        <div className="boq-segment-grid">
+          {Object.entries(SEGMENTS).map(([key, seg], i) => {
+            const rec = segmentRecommendations?.[key];
+            const totalItems = rec ? Object.values(rec).reduce<number>((a, v) =>
+              typeof v === "object" && v !== null && "items" in v ? a + (v as { items: unknown[] }).items.length : a, 0) : 0;
+            const tier = segmentTier(totalItems);
+            const layers = segmentLayerBreakdown(key, segmentRecommendations);
+            const active = hov === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => onSelect(key)}
+                onMouseEnter={() => setHov(key)}
+                onMouseLeave={() => setHov(null)}
+                className={`boq-segment-card${active ? " boq-segment-card-active" : ""}`}
+                style={{ paddingTop: "0.875rem", paddingBottom: "0.875rem", alignItems: "flex-start", gridTemplateColumns: "2.5rem 1fr" }}
+              >
+                {/* Index number */}
+                <span className="boq-seg-code" style={{ paddingTop: "0.1rem" }}>
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+
+                {/* Main content */}
+                <span style={{ display: "flex", flexDirection: "column", gap: "0.4rem", minWidth: 0 }}>
+                  {/* Title row */}
+                  <span style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                    <span className="boq-index-label">{seg.label}</span>
+                    {/* Complexity tier badge */}
+                    <span style={{
+                      fontFamily: "var(--boq-mono)",
+                      fontSize: "0.45rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.07em",
+                      textTransform: "uppercase",
+                      color: tier.color,
+                      border: `1px solid ${tier.color}`,
+                      borderRadius: "var(--boq-radius-sm)",
+                      padding: "0.1rem 0.35rem",
+                      opacity: 0.85,
+                    }}>
+                      {tier.label}
+                    </span>
+                  </span>
+
+                  {/* Description */}
+                  <span className="boq-index-desc">{seg.description}</span>
+
+                  {/* Layer breakdown chips */}
+                  <span style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap", marginTop: "0.1rem" }}>
+                    {layers.map(l => (
+                      <span
+                        key={l.code}
+                        style={{
+                          fontFamily: "var(--boq-mono)",
+                          fontSize: "0.45rem",
+                          fontWeight: 700,
+                          letterSpacing: "0.06em",
+                          background: active ? "rgba(26,77,124,0.12)" : "var(--boq-paper-elevated)",
+                          border: "1px solid var(--boq-rule-dark)",
+                          borderRadius: "3px",
+                          padding: "0.1rem 0.3rem",
+                          color: "var(--boq-ink-muted)",
+                        }}
+                      >
+                        {l.code} {l.count}
+                      </span>
+                    ))}
+                    <span style={{
+                      fontFamily: "var(--boq-mono)",
+                      fontSize: "0.45rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.06em",
+                      background: active ? "rgba(26,77,124,0.12)" : "var(--boq-accent-muted)",
+                      border: "1px solid var(--boq-accent-light)",
+                      borderRadius: "3px",
+                      padding: "0.1rem 0.3rem",
+                      color: "var(--boq-accent)",
+                    }}>
+                      {totalItems} items →
+                    </span>
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
 }
 
-function ServerPanel({ configs, updateConfig, addConfig, removeConfig, seg, rec, fmt }) {
+function ServerPanel({ configs, updateConfig, addConfig, removeConfig, seg, rec, fmt, serverBrands, serverOptions }) {
   const Sel = ({ value, onChange, children, mono }) => (<select value={value} onChange={e => onChange(e.target.value)} className={`boq-select${mono ? " boq-input-mono" : ""}`}>{children}</select>);
   const F = ({ label, children }) => (<div className="boq-form-field"><label className="boq-label">{label}</label>{children}</div>);
   const TB = ({ active, color, onClick, children }) => (<button type="button" onClick={onClick} className="boq-toggle-btn" style={{ flex: 1, borderColor: active ? color : undefined, background: active ? `${color}18` : undefined, color: active ? color : undefined, fontWeight: active ? 700 : 500 }}>{children}</button>);
@@ -670,7 +734,7 @@ function ServerPanel({ configs, updateConfig, addConfig, removeConfig, seg, rec,
       {seg && rec && (
         <div className="boq-callout" style={{ marginBottom: "1.125rem" }}>
           <div className="boq-callout-title">{seg.label} — recommended server</div>
-          <div style={{ fontSize: "0.8125rem", color: "var(--boq-ink-soft)", lineHeight: 1.65 }}>{rec.servers.reason}</div>
+          <div style={{ fontSize: "0.8125rem", color: "var(--boq-ink-soft)", lineHeight: 1.65 }}>{(rec.servers as any).reason}</div>
         </div>
       )}
       <div className="boq-panel-toolbar">
@@ -678,17 +742,17 @@ function ServerPanel({ configs, updateConfig, addConfig, removeConfig, seg, rec,
         <button type="button" onClick={addConfig} className="boq-btn boq-btn-ghost">+ Add Server Row</button>
       </div>
       {configs.map((cfg, idx) => {
-        const brand = SERVER_BRANDS[cfg.brand];
+        const brand = serverBrands?.[cfg.brand];
         const seriesData = brand?.series[cfg.series];
         const model = seriesData?.models.find(m => m.id === cfg.modelId);
-        const cpuList = cfg.cpuType === "amd" ? CPU_OPTIONS.amd : CPU_OPTIONS.intel;
-        const unitPrice = computeServerPrice({ ...cfg, qty: 1 });
+        const cpuList = cfg.cpuType === "amd" ? serverOptions?.cpuOptions.amd : serverOptions?.cpuOptions.intel;
+        const unitPrice = computeServerPrice({ ...cfg, qty: 1 }, serverBrands, serverOptions);
         const tierColor = { "Entry": "var(--boq-ink-muted)", "Mid-range": "var(--boq-teal)", "High-end": "var(--boq-accent)", "Mission Critical": "var(--boq-danger)" }[model?.tier] || "var(--boq-ink-muted)";
         return (
-          <div key={idx} className="boq-server-card" style={{ borderLeft: `3px solid ${brand.color}` }}>
+          <div key={idx} className="boq-server-card" style={{ borderLeft: `3px solid ${brand?.color || "var(--boq-accent)"}` }}>
             <div className="boq-server-card-header">
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span className="boq-brand-badge" style={{ background: brand.color }}>{brand.logo}</span>
+                <span className="boq-brand-badge" style={{ background: brand?.color }}>{brand?.logo}</span>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: "0.8125rem", color: "var(--boq-ink)" }}>{model?.name || "Select Model"}</div>
                   <div style={{ fontSize: "0.6875rem", color: "var(--boq-ink-muted)" }}>Server {idx + 1} · {model?.formFactor || "—"} · <span style={{ color: tierColor, fontWeight: 600 }}>{model?.tier}</span></div>
@@ -699,28 +763,28 @@ function ServerPanel({ configs, updateConfig, addConfig, removeConfig, seg, rec,
                   <div style={{ fontSize: "0.9375rem", fontWeight: 700, color: "var(--boq-ink)", fontFamily: "var(--boq-mono)" }}>{fmt(unitPrice * cfg.qty)}</div>
                   <div style={{ fontSize: "0.5625rem", color: "var(--boq-ink-muted)" }}>{cfg.qty}x @ {fmt(unitPrice)}</div>
                 </div>
-                {configs.length > 1 && <button type="button" onClick={() => removeConfig(idx)} className="boq-remove-btn" aria-label="Remove server">×</button>}
+                 {configs.length > 1 && <button type="button" onClick={() => removeConfig(idx)} className="boq-remove-btn" aria-label="Remove server" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}><Icon name="close" size={12} /></button>}
               </div>
             </div>
             <div className="boq-server-card-body">
               <div className="boq-server-grid">
-                <F label="Brand"><div style={{ display: "flex", gap: 5 }}>{Object.entries(SERVER_BRANDS).map(([k, b]) => <TB key={k} active={cfg.brand === k} color={b.color} onClick={() => updateConfig(idx, "brand", k)}>{b.logo}</TB>)}</div></F>
-                <F label="Series"><Sel value={cfg.series} onChange={v => updateConfig(idx, "series", v)}>{Object.keys(brand.series).map(s => <option key={s} value={s}>{s}</option>)}</Sel></F>
+                <F label="Brand"><div style={{ display: "flex", gap: 5 }}>{Object.entries(serverBrands || {}).map(([k, b]) => <TB key={k} active={cfg.brand === k} color={(b as any).color} onClick={() => updateConfig(idx, "brand", k)}>{(b as any).logo}</TB>)}</div></F>
+                <F label="Series"><Sel value={cfg.series} onChange={v => updateConfig(idx, "series", v)}>{Object.keys(brand?.series || {}).map(s => <option key={s} value={s}>{s}</option>)}</Sel></F>
                 <F label="Model"><Sel value={cfg.modelId} onChange={v => updateConfig(idx, "modelId", v)} mono>{seriesData?.models.map(m => <option key={m.id} value={m.id}>{m.name} · {m.tier}</option>)}</Sel></F>
                 <F label="CPU Arch"><div style={{ display: "flex", gap: 5 }}><TB active={cfg.cpuType === "intel"} color="#3b82f6" onClick={() => updateConfig(idx, "cpuType", "intel")}>Intel Xeon</TB><TB active={cfg.cpuType === "amd"} color="#ef4444" onClick={() => updateConfig(idx, "cpuType", "amd")}>AMD EPYC</TB></div></F>
-                <F label="Processor"><Sel value={cfg.cpuId} onChange={v => updateConfig(idx, "cpuId", v)} mono>{cpuList.map(c => <option key={c.id} value={c.id}>{c.label} (+{fmt(c.priceAdder)})</option>)}</Sel></F>
+                <F label="Processor"><Sel value={cfg.cpuId} onChange={v => updateConfig(idx, "cpuId", v)} mono>{cpuList?.map(c => <option key={c.id} value={c.id}>{c.label} (+{fmt(c.priceAdder)})</option>)}</Sel></F>
                 <F label="CPU Count"><div style={{ display: "flex", gap: 5 }}>{[1, 2, 4, 8].map(n => <TB key={n} active={cfg.cpuCount === n} color="#0369a1" onClick={() => updateConfig(idx, "cpuCount", n)}>{n}×</TB>)}</div></F>
-                <F label="Memory"><Sel value={cfg.ramId} onChange={v => updateConfig(idx, "ramId", v)}>{RAM_OPTIONS.map(r => <option key={r.id} value={r.id}>{r.label} (+{fmt(r.priceAdder)})</option>)}</Sel></F>
-                <F label="Local Storage"><Sel value={cfg.storageId} onChange={v => updateConfig(idx, "storageId", v)}>{STORAGE_OPT.map(s => <option key={s.id} value={s.id}>{s.label} (+{fmt(s.priceAdder)})</option>)}</Sel></F>
-                <F label="NIC"><Sel value={cfg.nicId} onChange={v => updateConfig(idx, "nicId", v)}>{NIC_OPT.map(n => <option key={n.id} value={n.id}>{n.label} (+{fmt(n.priceAdder)})</option>)}</Sel></F>
-                <F label="GPU"><Sel value={cfg.gpuId} onChange={v => updateConfig(idx, "gpuId", v)}>{GPU_OPT.map(g => <option key={g.id} value={g.id}>{g.label}{g.priceAdder > 0 ? ` (+${fmt(g.priceAdder)})` : ""}</option>)}</Sel></F>
-                <F label="OS"><Sel value={cfg.osId} onChange={v => updateConfig(idx, "osId", v)}>{OS_OPT.map(o => <option key={o.id} value={o.id}>{o.label}{o.priceAdder > 0 ? ` (+${fmt(o.priceAdder)})` : ""}</option>)}</Sel></F>
-                <F label="PSU"><Sel value={cfg.psuId} onChange={v => updateConfig(idx, "psuId", v)}>{PSU_OPT.map(p => <option key={p.id} value={p.id}>{p.label} (+{fmt(p.priceAdder)})</option>)}</Sel></F>
-                <F label="Support"><Sel value={cfg.supportId} onChange={v => updateConfig(idx, "supportId", v)}>{SUPPORT_OPT.map(s => <option key={s.id} value={s.id}>{s.label} (+{fmt(s.priceAdder)})</option>)}</Sel></F>
+                <F label="Memory"><Sel value={cfg.ramId} onChange={v => updateConfig(idx, "ramId", v)}>{serverOptions?.ramOptions.map(r => <option key={r.id} value={r.id}>{r.label} (+{fmt(r.priceAdder)})</option>)}</Sel></F>
+                <F label="Local Storage"><Sel value={cfg.storageId} onChange={v => updateConfig(idx, "storageId", v)}>{serverOptions?.storageOptions.map(s => <option key={s.id} value={s.id}>{s.label} (+{fmt(s.priceAdder)})</option>)}</Sel></F>
+                <F label="NIC"><Sel value={cfg.nicId} onChange={v => updateConfig(idx, "nicId", v)}>{serverOptions?.nicOptions.map(n => <option key={n.id} value={n.id}>{n.label} (+{fmt(n.priceAdder)})</option>)}</Sel></F>
+                <F label="GPU"><Sel value={cfg.gpuId} onChange={v => updateConfig(idx, "gpuId", v)}>{serverOptions?.gpuOptions.map(g => <option key={g.id} value={g.id}>{g.label}{g.priceAdder > 0 ? ` (+${fmt(g.priceAdder)})` : ""}</option>)}</Sel></F>
+                <F label="OS"><Sel value={cfg.osId} onChange={v => updateConfig(idx, "osId", v)}>{serverOptions?.osOptions.map(o => <option key={o.id} value={o.id}>{o.label}{o.priceAdder > 0 ? ` (+${fmt(o.priceAdder)})` : ""}</option>)}</Sel></F>
+                <F label="PSU"><Sel value={cfg.psuId} onChange={v => updateConfig(idx, "psuId", v)}>{serverOptions?.psuOptions.map(p => <option key={p.id} value={p.id}>{p.label} (+{fmt(p.priceAdder)})</option>)}</Sel></F>
+                <F label="Support"><Sel value={cfg.supportId} onChange={v => updateConfig(idx, "supportId", v)}>{serverOptions?.supportOptions.map(s => <option key={s.id} value={s.id}>{s.label} (+{fmt(s.priceAdder)})</option>)}</Sel></F>
                 <F label="Quantity"><div className="boq-qty-control">
-                  <button type="button" onClick={() => updateConfig(idx, "qty", Math.max(1, cfg.qty - 1))} className="boq-qty-btn">−</button>
+                  <button type="button" onClick={() => updateConfig(idx, "qty", Math.max(1, cfg.qty - 1))} className="boq-qty-btn" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}><Icon name="minus" size={10} /></button>
                   <input type="number" min={1} value={cfg.qty} onChange={e => updateConfig(idx, "qty", Math.max(1, parseInt(e.target.value) || 1))} className="boq-qty-input" />
-                  <button type="button" onClick={() => updateConfig(idx, "qty", cfg.qty + 1)} className="boq-qty-btn">+</button>
+                  <button type="button" onClick={() => updateConfig(idx, "qty", cfg.qty + 1)} className="boq-qty-btn" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}><Icon name="plus" size={10} /></button>
                 </div></F>
               </div>
             </div>
@@ -732,6 +796,15 @@ function ServerPanel({ configs, updateConfig, addConfig, removeConfig, seg, rec,
 }
 
 function InfraPanel({ cat, categoryKey, selections, updateQty, rec, seg, fmt }) {
+  // Guard: return null if cat is undefined (shouldn't happen if Configurator guards properly)
+  if (!cat) {
+    return (
+      <div style={{ padding: "2rem", textAlign: "center", color: "var(--boq-ink-muted)" }}>
+        <p>Category not found: {categoryKey}</p>
+      </div>
+    );
+  }
+
   const isHypervisor = cat.label === "Hypervisor / Virtualisation";
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [brandFilter, setBrandFilter] = useState("all");
@@ -752,7 +825,9 @@ function InfraPanel({ cat, categoryKey, selections, updateQty, rec, seg, fmt }) 
       <div>
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-          <div style={{ width: 44, height: 44, background: `${cat.color}18`, border: `2px solid ${cat.color}35`, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>{cat.icon}</div>
+          <div style={{ width: 44, height: 44, background: `${cat.color}18`, border: `2px solid ${cat.color}35`, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", color: cat.color }}>
+            <Icon name={cat.icon} size={20} />
+          </div>
           <div>
             <h2 style={{ fontWeight: 700, fontSize: 17, color: "#0f2644" }}>{cat.label}</h2>
             <div style={{ fontSize: 10, color: "#7aa3c0" }}>{cat.items.length} products across {HV_VENDORS.length} vendors{rec ? ` · ${recIds.length} recommended for ${seg?.label}` : ""}</div>
@@ -762,7 +837,9 @@ function InfraPanel({ cat, categoryKey, selections, updateQty, rec, seg, fmt }) 
         {/* Recommended banner */}
         {rec && seg && (
           <div style={{ background: `${seg.color}08`, border: `1.5px solid ${seg.color}30`, borderRadius: 10, padding: "12px 16px", marginBottom: 16 }}>
-            <div style={{ fontSize: 10, color: seg.color, fontWeight: 700, marginBottom: 8 }}>★ Recommended for {seg.label}</div>
+            <div style={{ fontSize: 10, color: seg.color, fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", gap: "0.3rem" }}>
+              <Icon name="sparkles" size={11} /> Recommended for {seg.label}
+            </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {recIds.map(id => {
                 const item = cat.items.find(i => i.id === id); if (!item) return null;
@@ -770,7 +847,7 @@ function InfraPanel({ cat, categoryKey, selections, updateQty, rec, seg, fmt }) 
                 return (
                   <button key={id} onClick={() => updateQty(id, qty > 0 ? -qty : 1)}
                     style={{ display: "inline-flex", alignItems: "center", gap: 5, background: qty > 0 ? `${seg.color}20` : `${seg.color}08`, border: `1.5px solid ${qty > 0 ? seg.color : seg.color + "40"}`, borderRadius: 6, padding: "5px 10px", fontSize: 10, color: seg.color, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", transition: "all 0.12s" }}>
-                    {qty > 0 && <span>✓</span>}{item.name.split("(")[0].trim()}
+                    {qty > 0 && <Icon name="check" size={11} style={{ marginRight: 3 }} />}{item.name.split("(")[0].trim()}
                   </button>
                 );
               })}
@@ -781,7 +858,7 @@ function InfraPanel({ cat, categoryKey, selections, updateQty, rec, seg, fmt }) 
         {/* Vendor selector cards */}
         <div style={{ marginBottom: 18 }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: "#1e3a5f", letterSpacing: 1, textTransform: "uppercase", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
-            <span>🏢</span> Select Hypervisor Vendor
+            <Icon name="server" size={12} /> Select Hypervisor Vendor
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(155px,1fr))", gap: 10 }}>
             {HV_VENDORS.map(vendor => {
@@ -793,7 +870,7 @@ function InfraPanel({ cat, categoryKey, selections, updateQty, rec, seg, fmt }) 
                 <button key={vendor.key} onClick={() => setSelectedVendor(isActive ? null : vendor.key)}
                   style={{ padding: "14px 12px", borderRadius: 12, border: `2px solid ${isActive ? vendor.color : selectedCount > 0 ? vendor.color + "60" : "#e0e7ff"}`, background: isActive ? `${vendor.color}12` : selectedCount > 0 ? `${vendor.color}06` : "#fff", cursor: "pointer", textAlign: "left", fontFamily: "inherit", transition: "all 0.15s", boxShadow: isActive ? `0 4px 16px ${vendor.color}25` : "0 1px 4px #1e40af06", position: "relative" }}>
                   {hasRec && <span style={{ position: "absolute", top: 8, right: 8, width: 7, height: 7, borderRadius: "50%", background: seg?.color || "#8b5cf6", border: "1.5px solid #fff" }} />}
-                  <div style={{ fontSize: 22, marginBottom: 7 }}>{vendor.icon}</div>
+                  <div style={{ marginBottom: 7, color: vendor.color }}><Icon name={vendor.icon} size={24} /></div>
                   <div style={{ fontWeight: 700, fontSize: 12, color: isActive ? vendor.color : "#0f2644", marginBottom: 3 }}>{vendor.label}</div>
                   <div style={{ fontSize: 9, color: "#7aa3c0", marginBottom: 8 }}>{vendorItems.length} products</div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -801,7 +878,9 @@ function InfraPanel({ cat, categoryKey, selections, updateQty, rec, seg, fmt }) 
                       ? <span style={{ fontSize: 9, fontWeight: 700, color: vendor.color, background: `${vendor.color}15`, borderRadius: 10, padding: "2px 7px" }}>{selectedCount} added</span>
                       : <span style={{ fontSize: 9, color: "#c0d4e8" }}>none selected</span>
                     }
-                    <span style={{ fontSize: 12, color: isActive ? vendor.color : "#bfdbfe", fontWeight: 700 }}>{isActive ? "▲" : "▼"}</span>
+                    <span style={{ display: "inline-flex", color: isActive ? vendor.color : "#bfdbfe" }}>
+                      <Icon name={isActive ? "chevron_up" : "chevron_down"} size={12} />
+                    </span>
                   </div>
                 </button>
               );
@@ -815,7 +894,7 @@ function InfraPanel({ cat, categoryKey, selections, updateQty, rec, seg, fmt }) 
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, paddingBottom: 10, borderBottom: "1.5px solid #e0e7ff" }}>
               {(() => {
                 const v = HV_VENDORS.find(v => v.key === selectedVendor); return (<>
-                  <span style={{ fontSize: 18 }}>{v.icon}</span>
+                  <span style={{ display: "inline-flex", color: v.color }}><Icon name={v.icon} size={18} /></span>
                   <span style={{ fontWeight: 700, fontSize: 14, color: v.color }}>{v.label} Products</span>
                   <span style={{ fontSize: 10, color: "#7aa3c0", marginLeft: "auto" }}>{visibleItems.length} items</span>
                 </>);
@@ -831,21 +910,21 @@ function InfraPanel({ cat, categoryKey, selections, updateQty, rec, seg, fmt }) 
                   <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5, flexWrap: "wrap" }}>
-                        {isRec && <span style={{ background: `${seg?.color}25`, border: `1px solid ${seg?.color}50`, borderRadius: 4, padding: "2px 7px", fontSize: 9, color: seg?.color, fontWeight: 700, flexShrink: 0 }}>★ RECOMMENDED</span>}
+                        {isRec && <span style={{ background: `${seg?.color}25`, border: `1px solid ${seg?.color}50`, borderRadius: 4, padding: "2px 7px", fontSize: 9, color: seg?.color, fontWeight: 700, flexShrink: 0, display: "inline-flex", alignItems: "center", gap: "0.2rem" }}><Icon name="sparkles" size={8} /> RECOMMENDED</span>}
                         <span style={{ fontWeight: 700, fontSize: 13, color: "#0f2644" }}>{item.name}</span>
                         {categoryKey && <Link to={`/products/${categoryKey}/${item.id}`} style={{ fontSize: 9, color: vColor, textDecoration: "none", fontWeight: 600 }}>View →</Link>}
                       </div>
                       <div style={{ fontSize: 11, color: "#7aa3c0", marginBottom: reason ? 6 : 0, lineHeight: 1.5 }}>{item.spec}</div>
-                      {reason && <div style={{ fontSize: 10, color: "#1e3a5f", background: "#e8f2fb", borderRadius: 6, padding: "6px 10px", borderLeft: `3px solid ${seg?.color || vColor}`, lineHeight: 1.6, fontWeight: 500 }}>💡 {reason}</div>}
+                      {reason && <div style={{ fontSize: 10, color: "#1e3a5f", background: "#e8f2fb", borderRadius: 6, padding: "6px 10px", borderLeft: `3px solid ${seg?.color || vColor}`, lineHeight: 1.6, fontWeight: 500, display: "flex", alignItems: "flex-start", gap: "0.4rem" }}><Icon name="tip" size={14} style={{ color: seg?.color || vColor, marginTop: 1, flexShrink: 0 }} /><span>{reason}</span></div>}
                     </div>
                     <div style={{ textAlign: "right", minWidth: 90, flexShrink: 0 }}>
                       <div style={{ fontSize: 15, color: vColor, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>{item.unitPrice === 0 ? "Free" : fmt(item.unitPrice)}</div>
                       <div style={{ fontSize: 9, color: "#bfdbfe", marginTop: 1 }}>per unit</div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
-                      <button onClick={() => updateQty(item.id, -1)} disabled={qty === 0} style={{ width: 30, height: 30, borderRadius: 6, border: `1.5px solid ${qty > 0 ? vColor : "#bfdbfe"}`, background: qty > 0 ? `${vColor}15` : "#f0f7ff", color: qty === 0 ? "#bfdbfe" : vColor, cursor: qty === 0 ? "not-allowed" : "pointer", fontSize: 17, fontWeight: 700 }}>−</button>
+                      <button onClick={() => updateQty(item.id, -1)} disabled={qty === 0} style={{ width: 30, height: 30, borderRadius: 6, border: `1.5px solid ${qty > 0 ? vColor : "#bfdbfe"}`, background: qty > 0 ? `${vColor}15` : "#f0f7ff", color: qty === 0 ? "#bfdbfe" : vColor, cursor: qty === 0 ? "not-allowed" : "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }}><Icon name="minus" size={12} /></button>
                       <span style={{ width: 30, textAlign: "center", fontSize: 15, fontWeight: 700, color: qty > 0 ? vColor : "#bfdbfe", fontFamily: "'JetBrains Mono',monospace" }}>{qty}</span>
-                      <button onClick={() => updateQty(item.id, 1)} style={{ width: 30, height: 30, borderRadius: 6, border: `1.5px solid ${vColor}`, background: `${vColor}15`, color: vColor, cursor: "pointer", fontSize: 17, fontWeight: 700 }}>+</button>
+                      <button onClick={() => updateQty(item.id, 1)} style={{ width: 30, height: 30, borderRadius: 6, border: `1.5px solid ${vColor}`, background: `${vColor}15`, color: vColor, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }}><Icon name="plus" size={12} /></button>
                     </div>
                     {qty > 0 && <div style={{ minWidth: 88, textAlign: "right", flexShrink: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: "#0f2644", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(item.unitPrice * qty)}</div>
@@ -858,9 +937,9 @@ function InfraPanel({ cat, categoryKey, selections, updateQty, rec, seg, fmt }) 
           </div>
         )}
         {!selectedVendor && (
-          <div style={{ textAlign: "center", padding: "32px 20px", color: "#93c5fd", fontSize: 12 }}>
-            <div style={{ fontSize: 36, marginBottom: 10 }}>☝️</div>
-            Select a vendor above to browse and add hypervisor products
+          <div style={{ textAlign: "center", padding: "32px 20px", color: "#93c5fd", fontSize: 12, display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
+            <Icon name="info" size={32} style={{ color: "#93c5fd" }} />
+            <span>Select a vendor above to browse and add hypervisor products</span>
           </div>
         )}
       </div>
@@ -874,7 +953,9 @@ function InfraPanel({ cat, categoryKey, selections, updateQty, rec, seg, fmt }) 
   return (
     <div>
       <div className="boq-layer-header">
-        <div className="boq-layer-icon">{categoryKey?.slice(0, 3).toUpperCase() || "CAT"}</div>
+        <div className="boq-layer-icon" style={{ color: cat.color, background: `${cat.color}15` }}>
+          <Icon name={cat.icon} size={20} />
+        </div>
         <div>
           <h2 className="boq-layer-title">{cat.label}</h2>
           <div className="boq-layer-meta">{cat.items.length} products{rec ? ` · ${rec.items.length} recommended for ${seg?.label}` : ""}</div>
@@ -921,7 +1002,11 @@ function InfraPanel({ cat, categoryKey, selections, updateQty, rec, seg, fmt }) 
             <div className="boq-product-row-inner">
               <div className="boq-product-main">
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5, flexWrap: "wrap" }}>
-                  {isRec && <span className="boq-tag-rec">Recommended</span>}
+                  {isRec && (
+                    <span className="boq-tag-rec" style={{ display: "inline-flex", alignItems: "center", gap: "0.2rem" }}>
+                      <Icon name="sparkles" size={9} /> Recommended
+                    </span>
+                  )}
                   <BrandBadge brand={item.brand} />
                   <span className="boq-product-name">{item.name}</span>
                   {categoryKey && <Link to={`/products/${categoryKey}/${item.id}`} style={{ fontSize: "0.625rem", color: "var(--boq-accent)", textDecoration: "none", fontWeight: 600 }}>View →</Link>}
@@ -934,9 +1019,9 @@ function InfraPanel({ cat, categoryKey, selections, updateQty, rec, seg, fmt }) 
                 <div className="boq-price-unit">per unit</div>
               </div>
               <div className="boq-qty-group">
-                <button type="button" onClick={() => updateQty(item.id, -1)} disabled={qty === 0} className="boq-qty-btn">−</button>
+                <button type="button" onClick={() => updateQty(item.id, -1)} disabled={qty === 0} className="boq-qty-btn" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}><Icon name="minus" size={10} /></button>
                 <span style={{ width: 28, textAlign: "center", fontSize: "0.875rem", fontWeight: 700, fontFamily: "var(--boq-mono)", color: qty > 0 ? "var(--boq-accent)" : "var(--boq-ink-muted)" }}>{qty}</span>
-                <button type="button" onClick={() => updateQty(item.id, 1)} className="boq-qty-btn">+</button>
+                <button type="button" onClick={() => updateQty(item.id, 1)} className="boq-qty-btn" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}><Icon name="plus" size={10} /></button>
               </div>
               {qty > 0 && (
                 <div className="boq-price-block">
@@ -952,13 +1037,29 @@ function InfraPanel({ cat, categoryKey, selections, updateQty, rec, seg, fmt }) 
   );
 }
 
-function ReportView({ report, projectInfo, serverConfigs, infraSelections, grandTotalUsd, serverTotal, infraTotal, seg, rec, fmt, quote, quoteTotals, onBack }) {
+function ReportView({ report, projectInfo, serverConfigs, infraSelections, grandTotalUsd, serverTotal, infraTotal, seg, rec, fmt, quote, quoteTotals, onBack, catalogue }) {
   const { allLines, refNo, today, tax, total, payload } = report;
   const { subtotal, tax: taxAmt, total: totalAmt } = quoteTotals;
   const taxLbl = taxLineLabel(quote.taxLabel, quote.taxRate);
   const totalLbl = totalInclTaxLabel(quote.taxLabel, quote.taxRate);
   const exclLbl = quote.taxRate > 0 ? `Total (excl. ${quote.taxLabel})` : "Total";
   const [pdfError, setPdfError] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  // Validity: 30 days from quote date or today
+  const issueDate = projectInfo.date ? new Date(projectInfo.date) : new Date();
+  const expiryDate = new Date(issueDate);
+  expiryDate.setDate(expiryDate.getDate() + 30);
+  const daysLeft = Math.max(0, Math.ceil((expiryDate.getTime() - Date.now()) / 86400000));
+  const validityExpired = daysLeft === 0;
+  const validityUrgent = daysLeft > 0 && daysLeft <= 7;
+
+  const handleCopyRef = () => {
+    navigator.clipboard.writeText(refNo).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   const handleDownloadPdf = () => {
     setPdfError("");
@@ -973,10 +1074,58 @@ function ReportView({ report, projectInfo, serverConfigs, infraSelections, grand
 
   return (
     <div className="boq-report-page">
-      <div className="boq-report-actions boq-no-print">
+      {/* Action bar */}
+      <div className="boq-report-actions boq-no-print" style={{ alignItems: "center" }}>
         <button type="button" onClick={onBack} className="boq-btn boq-btn-ghost">← Back</button>
         <button type="button" onClick={handleDownloadPdf} className="boq-btn boq-btn-success">Download PDF</button>
-        <button type="button" onClick={() => window.print()} className="boq-btn boq-btn-ghost">Print / Save PDF</button>
+        <button type="button" onClick={() => window.print()} className="boq-btn boq-btn-ghost">Print</button>
+
+        {/* Ref number + copy */}
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+          {/* Validity badge */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: "0.35rem",
+            padding: "0.3rem 0.65rem",
+            background: validityExpired ? "var(--boq-danger-muted)" : validityUrgent ? "var(--boq-warning-muted)" : "var(--boq-teal-muted)",
+            border: `1px solid ${validityExpired ? "var(--boq-danger)" : validityUrgent ? "var(--boq-warning)" : "var(--boq-teal)"}`,
+            borderRadius: "var(--boq-radius-sm)",
+          }}>
+            <span style={{
+              fontFamily: "var(--boq-mono)", fontSize: "0.5rem", fontWeight: 700,
+              letterSpacing: "0.08em", textTransform: "uppercase",
+              color: validityExpired ? "var(--boq-danger)" : validityUrgent ? "var(--boq-warning)" : "var(--boq-teal)",
+            }}>
+              {validityExpired ? "EXPIRED" : `VALID ${daysLeft}d left`}
+            </span>
+          </div>
+
+          {/* Ref number pill + copy */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: "0.35rem",
+            background: "var(--boq-paper-elevated)", border: "1px solid var(--boq-rule-dark)",
+            borderRadius: "var(--boq-radius-sm)", padding: "0.3rem 0.5rem 0.3rem 0.75rem",
+          }}>
+            <span style={{ fontFamily: "var(--boq-mono)", fontSize: "0.625rem", fontWeight: 600, color: "var(--boq-ink-soft)", letterSpacing: "0.04em" }}>
+              {refNo}
+            </span>
+            <button
+              type="button"
+              onClick={handleCopyRef}
+              title="Copy reference number"
+              style={{
+                border: "1px solid var(--boq-rule-dark)", borderRadius: "3px",
+                background: copied ? "var(--boq-teal)" : "var(--boq-paper-bright)",
+                color: copied ? "#fff" : "var(--boq-ink-muted)",
+                padding: "0.15rem 0.4rem", cursor: "pointer",
+                fontFamily: "var(--boq-mono)", fontSize: "0.5rem", fontWeight: 700,
+                letterSpacing: "0.04em", transition: "all 0.15s",
+                display: "inline-flex", alignItems: "center", gap: "0.2rem"
+              }}
+            >
+              {copied ? <><Icon name="check" size={10} /> COPIED</> : "COPY"}
+            </button>
+          </div>
+        </div>
       </div>
       {pdfError && <div style={{ marginBottom: 16, padding: "12px 16px", background: "#fff1f2", border: "1.5px solid #fecdd3", borderRadius: 8, fontSize: 12, color: "#be123c" }}>{pdfError}</div>}
       <div style={{ background: "#fff", color: "#111", borderRadius: 16, overflow: "hidden", boxShadow: "0 20px 60px rgba(30,64,175,0.15)" }}>
@@ -984,7 +1133,9 @@ function ReportView({ report, projectInfo, serverConfigs, infraSelections, grand
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-                <div style={{ width: 42, height: 42, background: "rgba(255,255,255,0.2)", borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, border: "1px solid rgba(255,255,255,0.3)" }}>⚡</div>
+                <div style={{ width: 42, height: 42, background: "rgba(255,255,255,0.2)", borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(255,255,255,0.3)", color: "#fff" }}>
+                  <Icon name="power" size={20} />
+                </div>
                 <div>
                   <div style={{ fontWeight: 800, fontSize: 18, color: "#ffffff" }}>Sniper Presales v9</div>
                   <div style={{ fontSize: 9, color: "#93c5fd", letterSpacing: 3, textTransform: "uppercase", fontFamily: "'JetBrains Mono',monospace" }}>BILL OF QUANTITY · FULL STACK · OEM NETWORK</div>
@@ -992,7 +1143,7 @@ function ReportView({ report, projectInfo, serverConfigs, infraSelections, grand
               </div>
               <h1 style={{ fontWeight: 800, fontSize: 24, color: "#ffffff", marginBottom: 6 }}>{projectInfo.name || "Datacenter Project"}</h1>
               <div style={{ fontSize: 12, color: "#93c5fd" }}>Client: <span style={{ color: "#fff", fontWeight: 600 }}>{projectInfo.client || "—"}</span> · Engineer: <span style={{ color: "#fff", fontWeight: 600 }}>{projectInfo.engineer || "—"}</span> · Date: <span style={{ color: "#fff" }}>{projectInfo.date || today}</span></div>
-              {seg && <div style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: 6, padding: "6px 14px" }}><span style={{ fontSize: 16 }}>{seg.icon}</span><span style={{ fontSize: 12, color: "#ffffff", fontWeight: 700 }}>{seg.label} Segment</span></div>}
+              {seg && <div style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: 6, padding: "6px 14px" }}><Icon name={seg.icon} size={14} style={{ color: "#fff" }} /><span style={{ fontSize: 12, color: "#ffffff", fontWeight: 700 }}>{seg.label} Segment</span></div>}
             </div>
             <div style={{ textAlign: "right" }}>
               <div style={{ background: "rgba(255,255,255,0.2)", color: "#ffffff", fontWeight: 700, fontSize: 11, padding: "5px 14px", borderRadius: 5, marginBottom: 10, display: "inline-block", fontFamily: "'JetBrains Mono',monospace", border: "1px solid rgba(255,255,255,0.3)" }}>{refNo}</div>
@@ -1006,19 +1157,21 @@ function ReportView({ report, projectInfo, serverConfigs, infraSelections, grand
         </div>
 
         {rec && <div style={{ padding: "14px 44px", background: "#eff6ff", borderBottom: "1px solid #bfdbfe" }}>
-          <div style={{ fontSize: 11, color: "#1e40af", fontWeight: 700, marginBottom: 4 }}>📌 Solution Rationale — {seg?.label}</div>
+          <div style={{ fontSize: 11, color: "#1e40af", fontWeight: 700, marginBottom: 4, display: "flex", alignItems: "center", gap: "0.3rem" }}>
+            <Icon name="info" size={12} /> Solution Rationale — {seg?.label}
+          </div>
           <div style={{ fontSize: 11, color: "#3b82f6", lineHeight: 1.7 }}>{rec.rationale}</div>
         </div>}
 
         <div style={{ padding: "18px 44px", background: "#f8faff", borderBottom: "1px solid #e0e7ff", display: "flex", gap: 10, flexWrap: "wrap" }}>
           <div style={{ padding: "10px 16px", background: "#fff", border: "1px solid #e0e7ff", borderTop: `3px solid ${seg?.color || "#1e40af"}`, borderRadius: 8, minWidth: 110 }}>
-            <div style={{ fontSize: 10, color: "#7aa3c0" }}>🖥️ Servers</div>
+            <div style={{ fontSize: 10, color: "#7aa3c0", display: "flex", alignItems: "center", gap: "0.3rem" }}><Icon name="server" size={12} /> Servers</div>
             <div style={{ fontSize: 15, fontWeight: 700, color: "#1e3a5f", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(serverTotal)}</div>
           </div>
-          {infraCatalogueEntries().map(([k, cat]) => {
+          {catalogue && Object.entries(catalogue.categories).map(([k, cat]) => {
             const items = infraSelections[k]; if (!items || !Object.keys(items).length) return null;
             const t = Object.entries(items).reduce((a, [id, q]) => a + (cat.items.find(i => i.id === id)?.unitPrice || 0) * q, 0);
-            return <div key={k} style={{ padding: "10px 16px", background: "#fff", border: "1px solid #e0e7ff", borderTop: `3px solid ${cat.color}`, borderRadius: 8, minWidth: 100 }}><div style={{ fontSize: 10, color: "#7aa3c0" }}>{cat.icon} {cat.label}</div><div style={{ fontSize: 15, fontWeight: 700, color: "#1e3a5f", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(t)}</div></div>;
+            return <div key={k} style={{ padding: "10px 16px", background: "#fff", border: "1px solid #e0e7ff", borderTop: `3px solid ${cat.color}`, borderRadius: 8, minWidth: 100 }}><div style={{ fontSize: 10, color: "#7aa3c0", display: "flex", alignItems: "center", gap: "0.3rem" }}><Icon name={cat.icon} size={12} /> {cat.label}</div><div style={{ fontSize: 15, fontWeight: 700, color: "#1e3a5f", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(t)}</div></div>;
           })}
         </div>
 
@@ -1028,7 +1181,7 @@ function ReportView({ report, projectInfo, serverConfigs, infraSelections, grand
             <thead><tr style={{ background: "linear-gradient(135deg,#1e3a8a,#0369a1)", color: "#fff" }}>{["#", "Category", "Product / Model", "Specifications", "Unit Price", "Qty", "Total"].map(h => (<th key={h} style={{ padding: "10px 12px", textAlign: ["Unit Price", "Total", "Qty"].includes(h) ? "right" : h === "#" ? "center" : "left", fontSize: 10, fontWeight: 700, letterSpacing: 0.5 }}>{h}</th>))}</tr></thead>
             <tbody>{allLines.map((li, i) => (<tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "#f8faff", borderBottom: "1px solid #e0e7ff" }}>
               <td style={{ padding: "8px 12px", textAlign: "center", color: "#93c5fd", fontSize: 10, fontFamily: "'JetBrains Mono',monospace" }}>{i + 1}</td>
-              <td style={{ padding: "8px 12px" }}><span style={{ display: "inline-flex", alignItems: "center", gap: 3, background: `${li.color}12`, border: `1px solid ${li.color}30`, borderRadius: 4, padding: "2px 8px", fontSize: 9, color: li.color, fontWeight: 700 }}>{li.icon} {li.category}</span></td>
+              <td style={{ padding: "8px 12px" }}><span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: `${li.color}12`, border: `1px solid ${li.color}30`, borderRadius: 4, padding: "2px 8px", fontSize: 9, color: li.color, fontWeight: 700 }}><Icon name={li.icon} size={10} /> {li.category}</span></td>
               <td style={{ padding: "8px 12px", fontWeight: 600, color: "#1e3a5f", maxWidth: 160 }}>{li.name}</td>
               <td style={{ padding: "8px 12px", color: "#7aa3c0", fontSize: 10, maxWidth: 260, lineHeight: 1.4 }}>{li.spec}</td>
               <td style={{ padding: "8px 12px", textAlign: "right", color: "#1e3a5f", fontFamily: "'JetBrains Mono',monospace" }}>{formatMoney(li.unitPrice, quote.currency)}</td>
@@ -1117,31 +1270,97 @@ function AIScreen({ onBack, onResult }) {
     }
     setLoading(false);
   };
+  const MIN_CHARS = 80;
+  const charCount = req.trim().length;
+  const charOk = charCount >= MIN_CHARS;
+
   return (
     <div className="boq-app">
       <header className="boq-header">
         <div className="boq-header-left">
-          <button type="button" onClick={onBack} className="boq-btn boq-btn-ghost">← Back</button>
-          <div className="boq-hv-icon" style={{ width: 36, height: 36 }}>AI</div>
-          <div>
-            <div className="boq-brand-title">Requirements engine</div>
+          <button type="button" onClick={onBack} className="boq-btn boq-btn-ghost boq-btn-sm">← Back</button>
+          <div className="boq-header-divider" />
+          <div
+            style={{
+              width: 30, height: 30, background: "var(--boq-accent)",
+              borderRadius: "var(--boq-radius-sm)", display: "flex",
+              alignItems: "center", justifyContent: "center",
+              fontFamily: "var(--boq-mono)", fontSize: "0.5625rem",
+              fontWeight: 700, color: "#fff", flexShrink: 0,
+            }}
+          >AI</div>
+          <div className="boq-header-brand-text">
+            <div className="boq-brand-title">Requirements Engine</div>
             <div className="boq-brand-sub">Automated BOQ generation</div>
           </div>
-          <span className="boq-badge boq-badge-ai">BOQ</span>
+          <span className="boq-badge boq-badge-ai">AI</span>
+        </div>
+        <div className="boq-header-right">
+          <button
+            type="button"
+            onClick={generate}
+            disabled={loading || !charOk}
+            className="boq-btn boq-btn-primary boq-btn-sm"
+          >
+            {loading
+              ? <><span className="boq-spinner" />Generating…</>
+              : <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
+                  <Icon name="arrow_right" size={13} />
+                  <span className="boq-header-nav-label">Generate BOQ</span>
+                </span>
+            }
+          </button>
         </div>
       </header>
       <div className="boq-ai-container">
-        <div className="boq-hero" style={{ marginBottom: "2rem" }}>
+        <div className="boq-hero" style={{ marginBottom: "1.5rem" }}>
+          <p className="boq-eyebrow">AI-assisted quoting</p>
           <h1 className="boq-page-title">Describe Your Infrastructure Needs</h1>
-          <p className="boq-page-lead">Describe your requirements and get a complete BOQ covering compute, storage, network, backup, monitoring, and database.</p>
+          <p className="boq-page-lead">
+            Describe your requirements in plain language. The engine will produce a
+            full-stack BOQ covering compute, network, storage, backup, monitoring,
+            and database — ready to load into the configurator.
+          </p>
         </div>
         <div className="boq-form-card">
+          <div className="boq-form-card-header">
+            <div className="boq-form-card-header-icon">REQ</div>
+            <div>
+              <h2>Requirements Brief</h2>
+              <p>Be specific: mention workload type, user count, compliance needs, and growth plans</p>
+            </div>
+          </div>
           <div className="boq-form-body">
             <div className="boq-form-grid">
               <div className="boq-form-section">
                 <div className="boq-form-field">
-                  <label className="boq-label boq-label-required" htmlFor="ai-req">Your Requirements</label>
-                  <textarea id="ai-req" className="boq-textarea" rows={10} value={req} onChange={e => setReq(e.target.value)} placeholder={"Describe your infrastructure in detail...\n\nExample: We are a 500-bed hospital running Epic EHR and PACS imaging with 200TB of patient data. We need HA storage, HIPAA-compliant backup, and 24x7 uptime with DR capability."} />
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                    <label className="boq-label boq-label-required" htmlFor="ai-req">Requirements brief</label>
+                    <span style={{
+                      fontFamily: "var(--boq-mono)",
+                      fontSize: "0.5rem",
+                      color: charOk ? "var(--boq-teal)" : charCount > 0 ? "var(--boq-warning)" : "var(--boq-ink-muted)",
+                      fontWeight: 700,
+                      letterSpacing: "0.04em",
+                      transition: "color 0.2s",
+                    }}>
+                      {charCount} / {MIN_CHARS} min chars{charOk ? <span style={{ display: "inline-flex", alignItems: "center", gap: "0.2rem", marginLeft: "0.2rem" }}><Icon name="check" size={10} /></span> : ""}
+                    </span>
+                  </div>
+                  <textarea
+                    id="ai-req"
+                    className="boq-textarea"
+                    rows={10}
+                    value={req}
+                    onChange={e => setReq(e.target.value)}
+                    placeholder={"Describe your infrastructure in plain language…\n\nExample: We are a 500-bed hospital running Epic EHR and PACS imaging with 200 TB of patient data. We need HA storage, HIPAA-compliant immutable backup, 24×7 uptime SLA, and a DR site with RTO < 2 hours."}
+                    style={charCount > 0 && !charOk ? { borderColor: "var(--boq-warning)" } : undefined}
+                  />
+                  {charCount > 0 && !charOk && (
+                    <span className="boq-field-hint" style={{ color: "var(--boq-warning)" }}>
+                      Add {MIN_CHARS - charCount} more characters for a quality BOQ
+                    </span>
+                  )}
                 </div>
                 <div className="boq-form-field">
                   <span className="boq-label">Quick Segment</span>
@@ -1158,8 +1377,8 @@ function AIScreen({ onBack, onResult }) {
                   </div>
                 ))}
                 {error && <div className="boq-alert boq-alert-error" role="alert">{error}</div>}
-                <button type="button" onClick={generate} disabled={loading} className="boq-btn boq-btn-primary boq-btn-lg" style={{ marginTop: "0.5rem" }}>
-                  {loading ? <><span className="boq-spinner" />Generating BOQ…</> : "Generate BOQ"}
+                <button type="button" onClick={generate} disabled={loading || !charOk} className="boq-btn boq-btn-primary boq-btn-lg" style={{ marginTop: "0.5rem" }}>
+                  {loading ? <><span className="boq-spinner" />Generating BOQ…</> : "Generate BOQ →"}
                 </button>
               </div>
             </div>
@@ -1172,10 +1391,64 @@ function AIScreen({ onBack, onResult }) {
 
 function AIResultPanel({ result, fmt, onRerun }) {
   const { settings, totalsFromUsd } = useQuoteMoney();
+
   if (!result) return (
-    <div className="boq-ai-empty">
-      <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--boq-ink-soft)" }}>No generated BOQ yet</div>
-      <button type="button" onClick={onRerun} className="boq-btn boq-btn-primary">Generate BOQ</button>
+    <div style={{ maxWidth: 560, margin: "3rem auto", padding: "0 1rem" }}>
+      {/* Icon */}
+      <div style={{ textAlign: "center", marginBottom: "1.75rem" }}>
+        <div style={{
+          display: "inline-flex", alignItems: "center", justifyContent: "center",
+          width: 56, height: 56, borderRadius: "var(--boq-radius)",
+          background: "var(--boq-accent-muted)", border: "1px solid var(--boq-accent-light)",
+        }}>
+          <span style={{ fontFamily: "var(--boq-mono)", fontWeight: 800, fontSize: "1rem", color: "var(--boq-accent)" }}>AI</span>
+        </div>
+        <h2 style={{ fontWeight: 700, fontSize: "1.125rem", color: "var(--boq-ink)", margin: "0.75rem 0 0.35rem", letterSpacing: "-0.02em" }}>
+          No generated BOQ yet
+        </h2>
+        <p style={{ fontSize: "0.8125rem", color: "var(--boq-ink-muted)", margin: 0, lineHeight: 1.6 }}>
+          Run the requirements engine to get a full-stack bill in seconds.
+        </p>
+      </div>
+
+      {/* How it works steps */}
+      <div className="boq-form-card" style={{ marginBottom: "1rem" }}>
+        <div className="boq-form-card-header">
+          <div className="boq-form-card-header-icon">HOW</div>
+          <div>
+            <h2>How it works</h2>
+            <p>Three steps from requirements to a downloadable BOQ</p>
+          </div>
+        </div>
+        <div style={{ padding: "0.875rem 1rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+          {[
+            { n: "01", title: "Describe your project", body: "Write your workload type, user scale, compliance needs, and growth plans in plain language." },
+            { n: "02", title: "Set scope parameters", body: "Pick a budget range, redundancy level, compliance framework, and optional vertical segment." },
+            { n: "03", title: "Review & load", body: "The AI returns a categorised BOQ. Review it here, then switch tabs to refine individual items." },
+          ].map(step => (
+            <div key={step.n} style={{ display: "flex", gap: "0.875rem", alignItems: "flex-start" }}>
+              <span style={{
+                fontFamily: "var(--boq-mono)", fontSize: "0.5rem", fontWeight: 800,
+                color: "var(--boq-accent)", background: "var(--boq-accent-muted)",
+                border: "1px solid var(--boq-accent-light)", borderRadius: "var(--boq-radius-sm)",
+                padding: "0.2rem 0.45rem", flexShrink: 0, letterSpacing: "0.06em",
+              }}>{step.n}</span>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: "0.8125rem", color: "var(--boq-ink)", marginBottom: "0.15rem" }}>{step.title}</div>
+                <div style={{ fontSize: "0.6875rem", color: "var(--boq-ink-muted)", lineHeight: 1.5 }}>{step.body}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CTA */}
+      <button type="button" onClick={onRerun} className="boq-btn boq-btn-primary boq-btn-lg">
+        Open Requirements Engine →
+      </button>
+      <p style={{ textAlign: "center", marginTop: "0.75rem", fontSize: "0.6875rem", color: "var(--boq-ink-muted)" }}>
+        Results typically take 8–15 seconds · Powered by GPT-4o
+      </p>
     </div>
   );
   const cats = [
@@ -1184,7 +1457,8 @@ function AIResultPanel({ result, fmt, onRerun }) {
     { key: "network", label: "Network", code: "NET" },
     { key: "backup", label: "Backup", code: "BKP" },
     { key: "monitoring", label: "Monitoring", code: "MON" },
-    { key: "database", label: "Database", code: "DB" },
+    { key: "sql_database", label: "SQL Database", code: "SQL" },
+    { key: "nosql_database", label: "NoSQL Database", code: "NSQL" },
   ];
   let grandTotalUsd = 0;
   cats.forEach(c => { (result[c.key] || []).forEach(i => { grandTotalUsd += i.unitPrice * i.qty; }); });
@@ -1206,7 +1480,9 @@ function AIResultPanel({ result, fmt, onRerun }) {
         return (
           <div key={cat.key} className="boq-ai-table-wrap">
             <div className="boq-ai-table-head">
-              <span className="boq-layer-icon">{cat.code}</span>
+              <span className="boq-layer-icon" style={{ background: "rgba(26,77,124,0.12)", color: "var(--boq-accent)" }}>
+                <Icon name={cat.key === "compute" ? "server" : cat.key} size={16} />
+              </span>
               <span className="boq-layer-title" style={{ flex: 1, fontSize: "0.875rem" }}>{cat.label}</span>
               <span className="boq-price-value">{fmt(catTotal)}</span>
             </div>

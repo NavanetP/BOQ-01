@@ -1,0 +1,313 @@
+{
+  "dell": {
+    "label": "Dell",
+    "logo": "DELL",
+    "color": "#007DB8",
+    "series": {
+      "PowerEdge R-Series (Rack)": {
+        "models": [
+          {
+            "id": "dell-r260",
+            "name": "Dell PowerEdge R260",
+            "formFactor": "1U",
+            "basePrice": 1299,
+            "tier": "Entry"
+          },
+          {
+            "id": "dell-r360",
+            "name": "Dell PowerEdge R360",
+            "formFactor": "1U",
+            "basePrice": 1799,
+            "tier": "Mid-range"
+          },
+          {
+            "id": "dell-r460",
+            "name": "Dell PowerEdge R460",
+            "formFactor": "2U",
+            "basePrice": 2499,
+            "tier": "Mid-range"
+          },
+          {
+            "id": "dell-r660",
+            "name": "Dell PowerEdge R660",
+            "formFactor": "2U",
+            "basePrice": 3499,
+            "tier": "High-end"
+          },
+          {
+            "id": "dell-r760",
+            "name": "Dell PowerEdge R760",
+            "formFactor": "2U",
+            "basePrice": 4499,
+            "tier": "High-end"
+          },
+          {
+            "id": "dell-r860",
+            "name": "Dell PowerEdge R860",
+            "formFactor": "4U",
+            "basePrice": 6499,
+            "tier": "Mission Critical"
+          },
+          {
+            "id": "dell-r960",
+            "name": "Dell PowerEdge R960",
+            "formFactor": "4U",
+            "basePrice": 8499,
+            "tier": "Mission Critical"
+          },
+          {
+            "id": "dell-xe8640",
+            "name": "Dell PowerEdge XE8640",
+            "formFactor": "4U",
+            "basePrice": 9499,
+            "tier": "Mission Critical"
+          },
+          {
+            "id": "dell-xe9680",
+            "name": "Dell PowerEdge XE9680",
+            "formFactor": "4U",
+            "basePrice": 10499,
+            "tier": "Mission Critical"
+          }
+        ]
+      },
+      "PowerEdge T-Series (Tower)": {
+        "models": [
+          {
+            "id": "dell-t150",
+            "name": "Dell PowerEdge T150",
+            "formFactor": "Tower",
+            "basePrice": 999,
+            "tier": "Entry"
+          },
+          {
+            "id": "dell-t350",
+            "name": "Dell PowerEdge T350",
+            "formFactor": "Tower",
+            "basePrice": 1499,
+            "tier": "Mid-range"
+          },
+          {
+            "id": "dell-t550",
+            "name": "Dell PowerEdge T550",
+            "formFactor": "Tower",
+            "basePrice": 2499,
+            "tier": "High-end"
+          }
+        ]
+      }
+    }
+  },
+  "hp": {
+    "label": "HPE",
+    "logo": "HPE",
+    "color": "#0096C7",
+    "series": {
+      "ProLiant DL-Series (Rack)": {
+        "models": [
+          {
+            "id": "hpe-dl20",
+            "name": "HPE ProLiant DL20 Gen11",
+            "formFactor": "1U",
+            "basePrice": 1399,
+            "tier": "Entry"
+          },
+          {
+            "id": "hpe-dl40",
+            "name": "HPE ProLiant DL40 Gen11",
+            "formFactor": "1U",
+            "basePrice": 1899,
+            "tier": "Mid-range"
+          },
+          {
+            "id": "hpe-dl60",
+            "name": "HPE ProLiant DL60 Gen11",
+            "formFactor": "1U",
+            "basePrice": 2399,
+            "tier": "Mid-range"
+          },
+          {
+            "id": "hpe-dl80",
+            "name": "HPE ProLiant DL80 Gen11",
+            "formFactor": "2U",
+            "basePrice": 3499,
+            "tier": "High-end"
+          },
+          {
+            "id": "hpe-dl160",
+            "name": "HPE ProLiant DL160 Gen11",
+            "formFactor": "2U",
+            "basePrice": 4499,
+            "tier": "High-end"
+          },
+          {
+            "id": "hpe-dl180",
+            "name": "HPE ProLiant DL180 Gen11",
+            "formFactor": "2U",
+            "basePrice": 5499,
+            "tier": "High-end"
+          },
+          {
+            "id": "hpe-dl320",
+            "name": "HPE ProLiant DL320 Gen11",
+            "formFactor": "2U",
+            "basePrice": 6499,
+            "tier": "Mission Critical"
+          },
+          {
+            "id": "hpe-dl360",
+            "name": "HPE ProLiant DL360 Gen11",
+            "formFactor": "2U",
+            "basePrice": 7499,
+            "tier": "Mission Critical"
+          },
+          {
+            "id": "hpe-dl380",
+            "name": "HPE ProLiant DL380 Gen11",
+            "formFactor": "2U",
+            "basePrice": 8499,
+            "tier": "Mission Critical"
+          },
+          {
+            "id": "hpe-dl560",
+            "name": "HPE ProLiant DL560 Gen11",
+            "formFactor": "2U",
+            "basePrice": 9499,
+            "tier": "Mission Critical"
+          },
+          {
+            "id": "hpe-dl580",
+            "name": "HPE ProLiant DL580 Gen11",
+            "formFactor": "4U",
+            "basePrice": 10499,
+            "tier": "Mission Critical"
+          }
+        ]
+      },
+      "ProLiant ML-Series (Tower)": {
+        "models": [
+          {
+            "id": "hpe-ml30",
+            "name": "HPE ProLiant ML30",
+            "formFactor": "Tower",
+            "basePrice": 1099,
+            "tier": "Entry"
+          },
+          {
+            "id": "hpe-ml110",
+            "name": "HPE ProLiant ML110",
+            "formFactor": "Tower",
+            "basePrice": 1499,
+            "tier": "Mid-range"
+          },
+          {
+            "id": "hpe-ml350",
+            "name": "HPE ProLiant ML350",
+            "formFactor": "Tower",
+            "basePrice": 2499,
+            "tier": "High-end"
+          }
+        ]
+      }
+    }
+  },
+  "lenovo": {
+    "label": "Lenovo",
+    "logo": "LENOVO",
+    "color": "#0097A7",
+    "series": {
+      "ThinkSystem SR-Series (Rack)": {
+        "models": [
+          {
+            "id": "lenovo-sr250-v3",
+            "name": "Lenovo ThinkSystem SR250 V3",
+            "formFactor": "1U",
+            "basePrice": 1499,
+            "tier": "Entry"
+          },
+          {
+            "id": "lenovo-sr530-v3",
+            "name": "Lenovo ThinkSystem SR530 V3",
+            "formFactor": "1U",
+            "basePrice": 1999,
+            "tier": "Mid-range"
+          },
+          {
+            "id": "lenovo-sr550-v3",
+            "name": "Lenovo ThinkSystem SR550 V3",
+            "formFactor": "2U",
+            "basePrice": 2999,
+            "tier": "Mid-range"
+          },
+          {
+            "id": "lenovo-sr570-v3",
+            "name": "Lenovo ThinkSystem SR570 V3",
+            "formFactor": "2U",
+            "basePrice": 3499,
+            "tier": "High-end"
+          },
+          {
+            "id": "lenovo-sr590-v3",
+            "name": "Lenovo ThinkSystem SR590 V3",
+            "formFactor": "2U",
+            "basePrice": 4499,
+            "tier": "High-end"
+          },
+          {
+            "id": "lenovo-sr630-v3",
+            "name": "Lenovo ThinkSystem SR630 V3",
+            "formFactor": "1U",
+            "basePrice": 4999,
+            "tier": "High-end"
+          },
+          {
+            "id": "lenovo-sr650-v3",
+            "name": "Lenovo ThinkSystem SR650 V3",
+            "formFactor": "2U",
+            "basePrice": 5999,
+            "tier": "Mission Critical"
+          },
+          {
+            "id": "lenovo-sr670-v3-gpu",
+            "name": "Lenovo ThinkSystem SR670 V3 GPU",
+            "formFactor": "2U",
+            "basePrice": 6999,
+            "tier": "Mission Critical"
+          },
+          {
+            "id": "lenovo-sr850-v3",
+            "name": "Lenovo ThinkSystem SR850 V3",
+            "formFactor": "2U",
+            "basePrice": 7999,
+            "tier": "Mission Critical"
+          },
+          {
+            "id": "lenovo-sr950-v3",
+            "name": "Lenovo ThinkSystem SR950 V3",
+            "formFactor": "4U",
+            "basePrice": 8999,
+            "tier": "Mission Critical"
+          }
+        ]
+      },
+      "ThinkSystem ST-Series (Tower)": {
+        "models": [
+          {
+            "id": "lenovo-st250-v3",
+            "name": "Lenovo ThinkSystem ST250 V3",
+            "formFactor": "Tower",
+            "basePrice": 1299,
+            "tier": "Entry"
+          },
+          {
+            "id": "lenovo-st550",
+            "name": "Lenovo ThinkSystem ST550",
+            "formFactor": "Tower",
+            "basePrice": 2499,
+            "tier": "High-end"
+          }
+        ]
+      }
+    }
+  }
+}

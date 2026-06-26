@@ -1,0 +1,322 @@
+{
+  "cpuOptions": {
+    "intel": [
+      {
+        "id": "xeon-silver-4510",
+        "label": "Intel Xeon Silver 4510 - 10C, 3.0GHz",
+        "priceAdder": 750
+      },
+      {
+        "id": "xeon-silver-4516",
+        "label": "Intel Xeon Silver 4516 - 16C, 3.2GHz",
+        "priceAdder": 1250
+      },
+      {
+        "id": "xeon-gold-5415+",
+        "label": "Intel Xeon Gold 5415+ - 8C, 3.4GHz",
+        "priceAdder": 1750
+      },
+      {
+        "id": "xeon-gold-6438n",
+        "label": "Intel Xeon Gold 6438N - 16C, 2.2GHz",
+        "priceAdder": 2250
+      },
+      {
+        "id": "xeon-gold-6438y",
+        "label": "Intel Xeon Gold 6438Y - 16C, 2.0GHz",
+        "priceAdder": 2500
+      },
+      {
+        "id": "xeon-gold-6448y",
+        "label": "Intel Xeon Gold 6448Y - 16C, 2.1GHz",
+        "priceAdder": 2750
+      },
+      {
+        "id": "xeon-gold-6454s",
+        "label": "Intel Xeon Gold 6454S - 18C, 2.1GHz",
+        "priceAdder": 3000
+      },
+      {
+        "id": "xeon-platinum-8452y",
+        "label": "Intel Xeon Platinum 8452Y - 24C, 2.0GHz",
+        "priceAdder": 4000
+      },
+      {
+        "id": "xeon-platinum-8460y",
+        "label": "Intel Xeon Platinum 8460Y - 24C, 2.1GHz",
+        "priceAdder": 4250
+      },
+      {
+        "id": "xeon-platinum-8470",
+        "label": "Intel Xeon Platinum 8470 - 28C, 2.1GHz",
+        "priceAdder": 5000
+      },
+      {
+        "id": "xeon-platinum-8480+",
+        "label": "Intel Xeon Platinum 8480+ - 32C, 2.0GHz",
+        "priceAdder": 6000
+      },
+      {
+        "id": "xeon-platinum-8592+",
+        "label": "Intel Xeon Platinum 8592+ - 32C, 2.2GHz",
+        "priceAdder": 7000
+      }
+    ],
+    "amd": [
+      {
+        "id": "epyc-9124",
+        "label": "AMD EPYC 9124 - 16C, 2.6GHz",
+        "priceAdder": 800
+      },
+      {
+        "id": "epyc-9224",
+        "label": "AMD EPYC 9224 - 24C, 2.5GHz",
+        "priceAdder": 1500
+      },
+      {
+        "id": "epyc-9254",
+        "label": "AMD EPYC 9254 - 24C, 2.9GHz",
+        "priceAdder": 2000
+      },
+      {
+        "id": "epyc-9354",
+        "label": "AMD EPYC 9354 - 32C, 2.7GHz",
+        "priceAdder": 3000
+      },
+      {
+        "id": "epyc-9374f",
+        "label": "AMD EPYC 9374F - 32C, 3.2GHz",
+        "priceAdder": 3500
+      },
+      {
+        "id": "epyc-9454",
+        "label": "AMD EPYC 9454 - 32C, 2.8GHz",
+        "priceAdder": 3500
+      },
+      {
+        "id": "epyc-9554",
+        "label": "AMD EPYC 9554 - 48C, 2.6GHz",
+        "priceAdder": 5000
+      },
+      {
+        "id": "epyc-9654",
+        "label": "AMD EPYC 9654 - 48C, 2.7GHz",
+        "priceAdder": 6000
+      },
+      {
+        "id": "epyc-9754",
+        "label": "AMD EPYC 9754 - 64C, 2.4GHz",
+        "priceAdder": 8000
+      }
+    ]
+  },
+  "ramOptions": [
+    {
+      "id": "64gb-ddr5",
+      "label": "64GB DDR5 ECC RDIMM",
+      "priceAdder": 200
+    },
+    {
+      "id": "128gb-ddr5",
+      "label": "128GB DDR5 ECC RDIMM",
+      "priceAdder": 350
+    },
+    {
+      "id": "256gb-ddr5",
+      "label": "256GB DDR5 ECC RDIMM",
+      "priceAdder": 600
+    },
+    {
+      "id": "512gb-ddr5",
+      "label": "512GB DDR5 ECC RDIMM",
+      "priceAdder": 1000
+    },
+    {
+      "id": "1tb-ddr5",
+      "label": "1TB DDR5 ECC RDIMM",
+      "priceAdder": 1500
+    },
+    {
+      "id": "2tb-ddr5",
+      "label": "2TB DDR5 ECC RDIMM",
+      "priceAdder": 2500
+    },
+    {
+      "id": "4tb-ddr5",
+      "label": "4TB DDR5 ECC RDIMM",
+      "priceAdder": 4000
+    },
+    {
+      "id": "6tb-ddr5",
+      "label": "6TB DDR5 ECC RDIMM",
+      "priceAdder": 6000
+    }
+  ],
+  "storageOptions": [
+    {
+      "id": "2x480gb-sata-ssd",
+      "label": "2x480GB SATA SSD",
+      "priceAdder": 300
+    },
+    {
+      "id": "4x960gb-sas-ssd",
+      "label": "4x960GB SAS SSD",
+      "priceAdder": 1000
+    },
+    {
+      "id": "4x1.92tb-sata-ssd",
+      "label": "4x1.92TB SATA SSD",
+      "priceAdder": 2000
+    },
+    {
+      "id": "8x3.84tb-nvme-ssd",
+      "label": "8x3.84TB NVMe SSD",
+      "priceAdder": 6000
+    },
+    {
+      "id": "8x7.68tb-nvme-ssd",
+      "label": "8x7.68TB NVMe SSD",
+      "priceAdder": 12000
+    },
+    {
+      "id": "4x14tb-hdd-raid",
+      "label": "4x14TB HDD RAID",
+      "priceAdder": 1500
+    },
+    {
+      "id": "8x16tb-hdd-raid",
+      "label": "8x16TB HDD RAID",
+      "priceAdder": 3000
+    }
+  ],
+  "nicOptions": [
+    {
+      "id": "1gbe",
+      "label": "1GbE NIC",
+      "priceAdder": 50
+    },
+    {
+      "id": "10gbe",
+      "label": "10GbE NIC",
+      "priceAdder": 100
+    },
+    {
+      "id": "25gbe",
+      "label": "25GbE NIC",
+      "priceAdder": 200
+    },
+    {
+      "id": "40gbe",
+      "label": "40GbE NIC",
+      "priceAdder": 300
+    },
+    {
+      "id": "50gbe",
+      "label": "50GbE NIC",
+      "priceAdder": 400
+    },
+    {
+      "id": "100gbe",
+      "label": "100GbE NIC",
+      "priceAdder": 600
+    }
+  ],
+  "gpuOptions": [
+    {
+      "id": "no-gpu",
+      "label": "No GPU",
+      "priceAdder": 0
+    },
+    {
+      "id": "nvidia-l4",
+      "label": "NVIDIA L4 (24GB)",
+      "priceAdder": 1000
+    },
+    {
+      "id": "nvidia-l40s",
+      "label": "NVIDIA L40S (48GB)",
+      "priceAdder": 2000
+    },
+    {
+      "id": "nvidia-a30",
+      "label": "NVIDIA A30 (24GB)",
+      "priceAdder": 1500
+    },
+    {
+      "id": "nvidia-h100-nvme",
+      "label": "NVIDIA H100 NVMe (80GB)",
+      "priceAdder": 4000
+    },
+    {
+      "id": "nvidia-h200",
+      "label": "NVIDIA H200 (141GB)",
+      "priceAdder": 6000
+    },
+    {
+      "id": "nvidia-b200",
+      "label": "NVIDIA B200 (192GB)",
+      "priceAdder": 8000
+    }
+  ],
+  "osOptions": [
+    {
+      "id": "bare-metal",
+      "label": "Bare Metal",
+      "priceAdder": 0
+    },
+    {
+      "id": "windows-server",
+      "label": "Windows Server",
+      "priceAdder": 500
+    },
+    {
+      "id": "rhel",
+      "label": "Red Hat Enterprise Linux",
+      "priceAdder": 300
+    },
+    {
+      "id": "sles",
+      "label": "SUSE Linux Enterprise Server",
+      "priceAdder": 300
+    },
+    {
+      "id": "esxi",
+      "label": "VMware ESXi",
+      "priceAdder": 800
+    }
+  ],
+  "supportOptions": [
+    {
+      "id": "1yr-nbd",
+      "label": "1 Year Next Business Day Support",
+      "priceAdder": 200
+    },
+    {
+      "id": "3yr-nbd",
+      "label": "3 Year Next Business Day Support",
+      "priceAdder": 500
+    },
+    {
+      "id": "5yr-24x7",
+      "label": "5 Year 24x7 Support",
+      "priceAdder": 1000
+    }
+  ],
+  "psuOptions": [
+    {
+      "id": "single-psu",
+      "label": "Single PSU",
+      "priceAdder": 0
+    },
+    {
+      "id": "redundant-psu",
+      "label": "Redundant PSU",
+      "priceAdder": 200
+    },
+    {
+      "id": "titanium-psu",
+      "label": "Titanium PSU",
+      "priceAdder": 500
+    }
+  ]
+}
